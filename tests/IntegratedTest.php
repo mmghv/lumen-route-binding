@@ -28,13 +28,13 @@ class IntegratedTest extends \PHPUnit_Framework_TestCase
 
         // Register a route with a wildcard
         $app->get('/{wildcard}', function ($wildcard) {
-            return $wildcard;
+            return response($wildcard);
         });
 
         // Dispatch the request
         $response = $app->handle(Request::create('/myWildcard', 'GET'));
 
         // Assert the binding is resolved
-        $this->assertSame('myWildcard Resolved', $response, '-> Response should be the wildcard value after been resolved!');
+        $this->assertSame('myWildcard Resolved', $response->getContent(), '-> Response should be the wildcard value after been resolved!');
     }
 }
