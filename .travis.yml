@@ -9,3 +9,4 @@ php:
 
 script:
   - phpunit
+  - composer install
