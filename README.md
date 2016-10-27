@@ -1,5 +1,7 @@
 # Lumen Route Binding
 
+[![Build Status](https://travis-ci.org/mmghv/lumen-route-binding.svg?branch=master)](https://travis-ci.org/mmghv/lumen-route-binding)
+
 This package Adds support for `Route Model binding` in Lumen (5.0 - 5.3).
 
 ## Installation
