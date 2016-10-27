@@ -13,7 +13,7 @@ This package Adds support for `Route Model binding` in Lumen (5.0 to 5.3).
 
 #### Using composer
 ```
-composer require mmghv/lumen-route-binding
+composer require mmghv/lumen-route-binding "^1.0"
 ```
 
 > Requires
