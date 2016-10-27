@@ -1,8 +1,13 @@
 # Lumen Route Binding
 
 [![Build Status](https://travis-ci.org/mmghv/lumen-route-binding.svg?branch=master)](https://travis-ci.org/mmghv/lumen-route-binding)
+[![Lumen Version](https://img.shields.io/badge/Lumen-5.0%20to%205.3-orange.svg)](https://packagist.org/packages/mmghv/lumen-route-binding) 
+[![Latest Stable Version](https://poser.pugx.org/mmghv/lumen-route-binding/v/stable)](https://packagist.org/packages/mmghv/lumen-route-binding)
+[![Total Downloads](https://poser.pugx.org/mmghv/lumen-route-binding/downloads)](https://packagist.org/packages/mmghv/lumen-route-binding)
+[![Latest Unstable Version](https://poser.pugx.org/mmghv/lumen-route-binding/v/unstable)](https://packagist.org/packages/mmghv/lumen-route-binding)
+[![License](https://poser.pugx.org/mmghv/lumen-route-binding/license)](https://packagist.org/packages/mmghv/lumen-route-binding)
 
-This package Adds support for `Route Model binding` in Lumen (5.0 - 5.3).
+This package Adds support for `Route Model binding` in Lumen (5.0 to 5.3).
 
 ## Installation
 
