@@ -1,6 +1,7 @@
 <?php
 namespace mmghv\LumenRouteBinding;
 
+use Illuminate\Support\Str;
 use InvalidArgumentException;
 use Exception;
 
@@ -31,6 +32,14 @@ class BindingResolver
     protected $implicitBindings = [];
 
     /**
+     * Composite wildcards bindings
+     * [[wildcards], binder, errorHandler]
+     *
+     * @var array
+     */
+    protected $compositeBindings = [];
+
+    /**
      * Create new instance
      *
      * @param callable $classResolver
@@ -49,6 +58,14 @@ class BindingResolver
      */
     public function resolveBindings(array $vars)
     {
+        // First check if the route $vars as a whole matches any registered composite binding
+        if (count($vars) > 1 && !empty($this->compositeBindings)) {
+            if ($r = $this->resolveCompositeBinding($vars)) {
+                return $r;
+            }
+        }
+
+        // If no composite binding found, check for explicit and implicit bindings
         if (!empty($this->implicitBindings) || !empty($this->bindings)) {
             foreach ($vars as $var => $value) {
                 $vars[$var] = $this->resolveBinding($var, $value);
@@ -56,6 +73,34 @@ class BindingResolver
         }
 
         return $vars;
+    }
+
+    /**
+     * Check for and resolve the composite bindings if a match found
+     *
+     * @param  array $vars  the wildcards array
+     *
+     * @return array|null   the wildcards array after been resolved, or NULL if no match found
+     */
+    protected function resolveCompositeBinding($vars)
+    {
+        $keys = array_keys($vars);
+
+        foreach ($this->compositeBindings as $binding) {
+            if ($keys === $binding[0]) {
+                $binder = $binding[1];
+                $errorHandler = $binding[2];
+
+                $r = $this->callBindingCallable($binder, $vars, $errorHandler, true);
+
+                if (!is_array($r) || count($r) !== count($vars)) {
+                    throw new Exception("Route-Model-Binding (composite-bind) : Return value should be an array and should be of the same count as the wildcards!");
+                }
+
+                // Combine the binding results with the keys
+                return array_combine($keys, array_values($r));
+            }
+        }
     }
 
     /**
@@ -146,7 +191,7 @@ class BindingResolver
     protected function getDefaultBindingResolver($class, $value)
     {
         $instance = $this->classResolver($class);
-        return [$instance->where([$instance->getRouteKeyName() => $value]),'firstOrFail'];
+        return [$instance->where($instance->getRouteKeyName(), $value),'firstOrFail'];
     }
 
     /**
@@ -162,24 +207,26 @@ class BindingResolver
     }
 
     /**
-     * Call the resolved binding callable to get the resolved model
+     * Call the resolved binding callable to get the resolved model(s)
      *
      * @param  callable      $callable      binder callable
-     * @param  string        $param         wildcard value to be passed to the callable
+     * @param  string|array  $args          wildcard(s) value(s) to be passed to the callable
      * @param  null|callable $errorHandler  handler to be called on exceptions (mostly ModelNotFoundException)
      *
-     * @return mixed resolved model
+     * @return mixed resolved model(s)
      *
      * @throws Exception
      */
-    protected function callBindingCallable($callable, $param, $errorHandler)
+    protected function callBindingCallable($callable, $args, $errorHandler)
     {
         try {
             // Try to call the resolver method and retrieve the model
-            if (is_null($param)) {
+            if (is_null($args)) {
                 return call_user_func($callable);
+            } elseif (is_array($args)) {
+                return call_user_func_array($callable, $args);
             } else {
-                return call_user_func($callable, $param);
+                return call_user_func($callable, $args);
             }
         } catch (Exception $e) {
             // If there's an error handler defined, call it, otherwise, re-throw the exception
@@ -224,7 +271,7 @@ class BindingResolver
      * @param  string $prefix               prefix to be added before class name
      * @param  string $suffix               suffix to be added after class name
      * @param  null|string $method          method name to be called on resolved object, omit it to default to :
-     *                                      object->where([object->getRouteKeyname(), 'value'])->firstOrFail()
+     *                                      object->where(object->getRouteKeyname(), $value)->firstOrFail()
      * @param  null|callable $errorHandler  handler to be called on exceptions (mostly ModelNotFoundException)
      *
      * @example (bind all models in 'App' namespace) :
@@ -239,5 +286,34 @@ class BindingResolver
     public function implicitBind($namespace, $prefix = '', $suffix = '', $method = null, callable $errorHandler = null)
     {
         $this->implicitBindings[] = compact('namespace', 'prefix', 'suffix', 'method', 'errorHandler');
+    }
+
+    /**
+     * Register a composite binding (more than one model) with a specific order
+     *
+     * @param  array          $keys          wildcards composite
+     * @param  callable       $binder        resolver callable, will be passed the wildcards values and should return an array of resolved values of the same count and order
+     * @param  null|callable  $errorHandler  handler to be called on exceptions (which is thrown in the resolver callable)
+     *
+     * @throws InvalidArgumentException
+     *
+     * @example (bind 2 wildcards composite {oneToMany relation})
+     * ->compositeBind(['post', 'comment'], function($post, $comment) {
+     *     $post = \App\Post::findOrFail($post);
+     *     $comment = $post->comments()->findOrFail($comment);
+     *     return [$post, $comment];
+     * });
+     */
+    public function compositeBind($keys, callable $binder, callable $errorHandler = null)
+    {
+        if (!is_array($keys)) {
+            throw new InvalidArgumentException('Route-Model-Binding : Invalid $keys value, Expected array of wildcards names');
+        }
+
+        if (count($keys) < 2) {
+            throw new InvalidArgumentException('Route-Model-Binding : Invalid $keys value, Expected array of more than one wildcard');
+        }
+
+        $this->compositeBindings[] = [$keys, $binder, $errorHandler];
     }
 }

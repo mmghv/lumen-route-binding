@@ -8,9 +8,7 @@ class BindingResolverTest extends \PHPUnit_Framework_TestCase
 {
     public function setUp()
     {
-        $this->binder = new BindingResolver(function ($class) {
-            return new $class;
-        });
+        $this->resetBinder();
 
         $this->model = m::mock('overload:App\Models\Model');
         $this->myTestRepo = m::mock('overload:App\Repositories\MyTestRepo');
@@ -30,6 +28,12 @@ class BindingResolverTest extends \PHPUnit_Framework_TestCase
         m::close();
     }
 
+    protected function resetBinder()
+    {
+        $this->binder = new BindingResolver(function ($class) {
+            return new $class;
+        });
+    }
     /**
      * setup expectations on mock model to receive :
      * $model->where([$model->getRouteKeyName(), 'wildcard_value'])->firstOrFail();
@@ -46,7 +50,7 @@ class BindingResolverTest extends \PHPUnit_Framework_TestCase
             ->andReturn('bind_result');
 
         $model->shouldReceive('where')->once()
-              ->with(['route_key' => 'wildcard_value'])
+              ->with('route_key', 'wildcard_value')
               ->andReturn($query->getMock());
 
         if ($throwException) {
@@ -77,6 +81,10 @@ class BindingResolverTest extends \PHPUnit_Framework_TestCase
 
         $this->binder->bind('model2', function () {
             return 1;
+        });
+
+        $this->binder->compositeBind(['model1', 'model2'], function () {
+            return ['model1', 'model2'];
         });
 
         // resolve bindings (done when route is dispatched)
@@ -513,5 +521,259 @@ class BindingResolverTest extends \PHPUnit_Framework_TestCase
 
         // assert resolved bindings
         $this->assertSame($this->expected, $r);
+    }
+
+    /**
+     * @expectedException \InvalidArgumentException
+     */
+    public function testCompositeBindAcceptsOnlyArrayOfParts()
+    {
+        // set bindings
+        $this->binder->compositeBind('string', function () {
+            //
+        });
+    }
+
+    /**
+     * @expectedException \InvalidArgumentException
+     */
+    public function testCompositeBindAcceptsOnlyArrayOfMoreThanOnePart()
+    {
+        // set bindings
+        $this->binder->compositeBind(['model'], function () {
+            //
+        });
+    }
+
+    public function testCompositeBindAcceptsArrayOfMoreThanOnePart()
+    {
+        // set bindings
+        $this->binder->compositeBind(['part1', 'part2'], function () {
+            //
+        });
+
+        $this->binder->compositeBind(['part1', 'part2', 'part3'], function () {
+            //
+        });
+
+        $this->binder->compositeBind(['part1', 'part2', 'part3', 'part4'], function () {
+            //
+        });
+    }
+
+    public function testCompositeBindWorks()
+    {
+        $this->wildcards = ['parent' => 'parent_value', 'child' => 'child_value'];
+        $this->expected = ['parent' => 'parent_result', 'child' => 'child_result'];
+
+        // set bindings
+        $this->binder->compositeBind(['parent', 'child'], function ($parent, $child) {
+            $parent = ($parent === $this->wildcards['parent']) ? $this->expected['parent'] : 'wrong wildcard value for [parent]!';
+            $child = ($child === $this->wildcards['child']) ? $this->expected['child'] : 'wrong wildcard value for [child]!';
+            return [$parent, $child];
+        });
+
+        // resolve bindings (done when route is dispatched)
+        $r = $this->binder->resolveBindings($this->wildcards);
+
+        // assert resolved bindings
+        $this->assertSame($this->expected, $r, '-> Custom closure binding should be called with expected wildcards values and it\'s return should be used as the binding results');
+    }
+
+    public function testCompositeBindWorksWithMoreThanTwoWildcards()
+    {
+        $this->wildcards = ['parent' => 'parent_value', 'child' => 'child_value', 'grand-child' => 'grand-child_value'];
+        $this->expected = ['parent' => 'parent_result', 'child' => 'child_result', 'grand-child' => 'grand-child_result'];
+
+        // set bindings
+        $this->binder->compositeBind(['parent', 'child', 'grand-child'], function ($parent, $child, $grandChild) {
+            $parent = ($parent === $this->wildcards['parent']) ? $this->expected['parent'] : 'wrong wildcard value for [parent]!';
+            $child = ($child === $this->wildcards['child']) ? $this->expected['child'] : 'wrong wildcard value for [child]!';
+            $grandChild = ($grandChild === $this->wildcards['grand-child']) ? $this->expected['grand-child'] : 'wrong wildcard value for [grand-child]!';
+            return [$parent, $child, $grandChild];
+        });
+
+        // resolve bindings (done when route is dispatched)
+        $r = $this->binder->resolveBindings($this->wildcards);
+
+        // assert resolved bindings
+        $this->assertSame($this->expected, $r, '-> Custom closure binding should be called with expected wildcards values and it\'s return should be used as the binding results');
+    }
+
+    public function testCompositeBindOnlyMatchesTheWholeWildcardsPartsWithTheSameOrder()
+    {
+        // =========================================================================
+        //
+        $scenario = 'count does not match "<"';
+        $this->resetBinder();
+        $this->wildcards = ['wildcard1' => 1, 'wildcard2' => 2];
+
+        // set bindings
+        $this->binder->compositeBind(['wildcard1', 'wildcard2', 'wildcard3'], function () {
+            return [0, 0, 0];
+        });
+
+        // resolve bindings (done when route is dispatched)
+        $r = $this->binder->resolveBindings($this->wildcards);
+
+        // assert resolved bindings
+        $this->assertSame($this->wildcards, $r, "-> composite binding should not match ($scenario) so the wildcards should be returned as is without being touched!");
+        // =========================================================================
+        //
+        $scenario = 'count does not match ">"';
+        $this->resetBinder();
+        $this->wildcards = ['wildcard1' => 1, 'wildcard2' => 2, 'wildcard3' => 3];
+
+        // set bindings
+        $this->binder->compositeBind(['wildcard1', 'wildcard2'], function () {
+            return [0, 0];
+        });
+
+        // resolve bindings (done when route is dispatched)
+        $r = $this->binder->resolveBindings($this->wildcards);
+
+        // assert resolved bindings
+        $this->assertSame($this->wildcards, $r, "-> composite binding should not match ($scenario) so the wildcards should be returned as is without being touched!");
+        // =========================================================================
+        //
+        $scenario = 'first wildcard does not match';
+        $this->resetBinder();
+        $this->wildcards = ['wildcard1' => 1, 'wildcard2' => 2, 'wildcard3' => 3];
+
+        // set bindings
+        $this->binder->compositeBind(['no-match', 'wildcard2', 'wildcard3'], function () {
+            return [0, 0, 0];
+        });
+
+        // resolve bindings (done when route is dispatched)
+        $r = $this->binder->resolveBindings($this->wildcards);
+
+        // assert resolved bindings
+        $this->assertSame($this->wildcards, $r, "-> composite binding should not match ($scenario) so the wildcards should be returned as is without being touched!");
+        // =========================================================================
+        //
+        $scenario = 'last wildcard does not match';
+        $this->resetBinder();
+        $this->wildcards = ['wildcard1' => 1, 'wildcard2' => 2, 'wildcard3' => 3];
+
+        // set bindings
+        $this->binder->compositeBind(['wildcard1', 'wildcard2', 'no-match'], function () {
+            return [0, 0, 0];
+        });
+
+        // resolve bindings (done when route is dispatched)
+        $r = $this->binder->resolveBindings($this->wildcards);
+
+        // assert resolved bindings
+        $this->assertSame($this->wildcards, $r, "-> composite binding should not match ($scenario) so the wildcards should be returned as is without being touched!");
+        // =========================================================================
+        //
+        $scenario = 'composite order does not match';
+        $this->resetBinder();
+        $this->wildcards = ['wildcard1' => 1, 'wildcard2' => 2];
+
+        // set bindings
+        $this->binder->compositeBind(['wildcard2', 'wildcard1'], function () {
+            return [0, 0];
+        });
+
+        // resolve bindings (done when route is dispatched)
+        $r = $this->binder->resolveBindings($this->wildcards);
+
+        // assert resolved bindings
+        $this->assertSame($this->wildcards, $r, "-> composite binding should not match ($scenario) so the wildcards should be returned as is without being touched!");
+        // =========================================================================
+    }
+
+    /**
+     * @expectedException \Exception
+     */
+    public function testCompositeBindSquawksIfReturnValueIsNotAnArray()
+    {
+        $this->wildcards = ['parent' => 'parent_value', 'child' => 'child_value'];
+        $this->expected = ['parent' => 'parent_result', 'child' => 'child_result'];
+
+        // set bindings
+        $this->binder->compositeBind(['parent', 'child'], function () {
+            return 'NoneArrayValue';
+        });
+
+        // resolve bindings (done when route is dispatched)
+        $r = $this->binder->resolveBindings($this->wildcards);
+    }
+
+    /**
+     * @expectedException \Exception
+     */
+    public function testCompositeBindSquawksIfReturnValueIsNotAnArrayOfTheSameCountAsTheWildcards()
+    {
+        $this->wildcards = ['parent' => 'parent_value', 'child' => 'child_value'];
+        $this->expected = ['parent' => 'parent_result', 'child' => 'child_result'];
+
+        // set bindings
+        $this->binder->compositeBind(['parent', 'child'], function () {
+            return ['ArrayOfOneItem'];
+        });
+
+        // resolve bindings (done when route is dispatched)
+        $r = $this->binder->resolveBindings($this->wildcards);
+    }
+
+    /**
+     * @expectedException \Exception
+     */
+    public function testCompositeBindRethrowsException()
+    {
+        $this->wildcards = ['parent' => 'parent_value', 'child' => 'child_value'];
+        $this->expected = ['parent' => 'parent_result', 'child' => 'child_result'];
+
+        // set bindings
+        $this->binder->compositeBind(['parent', 'child'], function () {
+            throw new \Exception();
+        });
+
+        // resolve bindings (done when route is dispatched)
+        $r = $this->binder->resolveBindings($this->wildcards);
+    }
+
+    public function testCompositeBindErrorHandler()
+    {
+        $this->wildcards = ['parent' => 'parent_value', 'child' => 'child_value'];
+        $this->expected = ['parent' => 'errorHandler_result1', 'child' => 'errorHandler_result2'];
+
+        // set bindings
+        $this->binder->compositeBind(['parent', 'child'], function () {
+            throw new \Exception();
+        }, function ($e) {
+            if ($e instanceof \Exception) {
+                return ['errorHandler_result1', 'errorHandler_result2'];
+            }
+        });
+
+        // resolve bindings (done when route is dispatched)
+        $r = $this->binder->resolveBindings($this->wildcards);
+
+        // assert resolved bindings
+        $this->assertSame($this->expected, $r, '-> Exception thrown in closure should be handled to the errorHandler and then it\'s return should be used as the binding result!');
+    }
+
+    public function testCompositeBindTakesPriorityOverOtherBindings()
+    {
+        $this->wildcards = ['model' => 'model_value', 'child' => 'child_value'];
+        $this->expected = ['model' => 'model_result', 'child' => 'child_result'];
+
+        // set bindings
+        $this->binder->implicitBind('App\Models');
+        $this->binder->bind('model', 'App\Repositories\MyTestRepo');
+
+        $this->binder->compositeBind(['model', 'child'], function () {
+            return ['model_result', 'child_result'];
+        });
+
+        // resolve bindings (done when route is dispatched)
+        $r = $this->binder->resolveBindings($this->wildcards);
+
+        // assert resolved bindings
+        $this->assertSame($this->expected, $r, '-> Composite binding should take Priority over explicit binding and implicit binding');
     }
 }
