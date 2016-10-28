@@ -7,7 +7,9 @@
 [![Latest Unstable Version](https://poser.pugx.org/mmghv/lumen-route-binding/v/unstable)](https://packagist.org/packages/mmghv/lumen-route-binding)
 [![License](https://poser.pugx.org/mmghv/lumen-route-binding/license)](https://packagist.org/packages/mmghv/lumen-route-binding)
 
-This package Adds support for `Route Model binding` in Lumen (5.0 to 5.3).
+This package Adds support for `Route Model Binding` in Lumen (5.0 to 5.3).
+
+> As known, Lumen doesn't support `Route Model Binding` out of the box due to the fact that Lumen doesn't use the Illuminate router that Laravel uses, Instead, It uses the [FastRoute](https://github.com/nikic/FastRoute) which is much faster. With this package, We add support for the powerful `Route Model Binding` while still benefit the speed of the FastRoute in Lumen.
 
 ## Installation
 
@@ -19,7 +21,7 @@ composer require mmghv/lumen-route-binding "^1.0"
 > Requires
 > ```
 > php >= 4.5.0
-> Lumen ~5.0
+> Lumen 5.*
 > ```
 
 #### Register the service provider in `bootstrap/app.php`
@@ -34,7 +36,7 @@ $app->register('mmghv\LumenRouteBinding\RouteBindingServiceProvider');
 
 ### Where to define our bindings
 
-We can define our `bindings` in `bootstrap/app.php` after registering the package's service provider, Or better, We can create a service provider that extendes the package's service provider :
+We can define our `bindings` in `bootstrap/app.php` after registering the package's service provider, **Or better**, We can create a service provider that extendes the package's service provider :
 
 ```PHP
 // app/Providers/RouteBindingServiceProvider.php
@@ -64,7 +66,7 @@ And place it in `app/Providers` then register this provider rather than the pack
 $app->register('app/Providers/RouteBindingServiceProvider');
 ```
 
-This way we can define our `bindings` in that service provider (in the `boot` method).
+This way, We can define our `bindings` in that service provider (in the `boot` method).
 
 ### Defining the bindings
 
@@ -73,11 +75,11 @@ First, we get the binder instance used to define the bindings from the `IoC` con
 $binder = $this->app['bindingResolver'];
 ```
 
-Then we define our bindings, we have two types of bindings:
+Then we define our bindings, we have **two** types of bindings:
 
-#### Explicit binding
+#### 1) Explicit binding
 
-We can explicitly bind a route wildcard to a model name using the `bind` method :
+We can explicitly bind a route wildcard name to a specific model using the `bind` method :
 
 ```PHP
 $binder->bind('user', 'App\User');
@@ -114,6 +116,16 @@ public function getRouteKeyName()
 }
 ```
 
+##### Using a custom resolver closure :
+
+If you wish to use your own resolution logic, you may pass a closure instead of the class name to the `bind` method, The closure will receive the value of the URI segment and should return the instance of the class that should be injected into the route :
+
+```PHP
+$binder->bind('article', function($value) {
+    return \App\Article::where('slug', $value)->firstOrFail();
+});
+```
+
 ##### Handling the `NotFound` exception :
 
 If no model found with the given key, The Eloquent `firstOrFail` will throw a `ModelNotFoundException`, To handle this exception, We can pass a closure as the third parameter to the `bind` method :
@@ -127,17 +139,7 @@ $binder->bind('article', 'App\Article', function($e) {
 });
 ```
 
-##### Using a custom resolver closure :
-
-If you wish to use your own resolution logic, you may pass a closure instead of the class name to the `bind` method, The closure will receive the value of the URI segment and should return the instance of the class that should be injected into the route :
-
-```PHP
-$binder->bind('article', function($value) {
-    return \App\Article::where('slug', $value)->firstOrFail();
-});
-```
-
-#### Implicit binding
+#### 2) Implicit binding
 
 Using the `implicitBind` method, We can tell the binder to automatically bind all the models in a given namespace :
 
@@ -153,7 +155,7 @@ $app->get('articles/{article}', function($myArticle) {
 });
 ```
 
-The binder will first check for any explicit binding that matches the `article` key. If no explicit binding found, It then (and according to our previous implicit binding) will check if the following class exists `App\Article` (The namespace + ucFirst(the key)), If it finds it, Then it will call `firstOrFail` on it like the explicit binding and inject the returned instance into the route, However, If no classes found with this name, It will continue to the next binding (if any) and return the route parameters unchanged if no bindings matches.
+The binder will first check for any **explicit binding** that matches the `article` key. If no match found, It then (and according to our previous implicit binding) will check if the following class exists `App\Article` (The namespace + ucFirst(the key)), If it finds it, Then it will call `firstOrFail` on the class like the explicit binding and inject the returned instance into the route, **However**, If no classes found with this name, It will continue to the next binding (if any) and return the route parameters unchanged if no bindings matches.
 
 ##### Customizing The Key Name
 
@@ -173,7 +175,7 @@ public function getRouteKeyName()
 
 ##### Implicit binding with repositories
 
-We can use implicit binding with classes other than the `Eloquent` models, For example if we use something like `Repository Pattern` and would like our bindings to use the repository classes instead of the Eloquent models :
+We can use implicit binding with classes other than the `Eloquent` models, For example if we use something like `Repository Pattern` and would like our bindings to use the repository classes instead of the Eloquent models, We can do that.
 
 The problem is that the repository classes names usually use a `Prefix` and\or `Suffix` beside the Eloquent model name, For example, The `Article` Eloquent model, Has a corresponding repository class with the name `EloquentArticleRepository`, We can set our implicit binding to use this prefix and\or suffix like this :
 
@@ -181,7 +183,7 @@ The problem is that the repository classes names usually use a `Prefix` and\or `
 $binder->implicitBind('App\Repositories', 'Eloquent', 'Repository');
 ```
 
-(Of course we can leave the `prefix` and\or the `suffix` empty if we don't use it)
+(Of course we can leave out the `prefix` and\or the `suffix` if we don't use it)
 
 So in this example :
 
@@ -191,7 +193,7 @@ $app->get('articles/{article}', function($myArticle) {
 });
 ```
 
-The binder will check if the following class exists `App\Repositories\EloquentArticleRepository` (The namespace + prefix + ucFirst(the key) + suffix), If it finds it, Then it will call `firstOrFail` using the column `getRouteKeyName()` (so you should add these methods to your repository).
+The binder will check if the following class exists `App\Repositories\EloquentArticleRepository` (The namespace + prefix + ucFirst(the key) + suffix), If it finds it, Then it will call `firstOrFail` using the column from `getRouteKeyName()` (so you should have these methods on your repository).
 
 ##### Using custom method
 
@@ -203,7 +205,7 @@ $binder->implicitBind('App\Repositories', 'Eloquent', 'Repository', 'findForRout
 
 This way, The binder will call the custom method `findForRoute` on our repository passing the route wildcard value and expecting it to return the resolved instance.
 
-* Example of using a custom method with implicit binding while using the repository pattern :
+###### Example of using a custom method with implicit binding while using the repository pattern :
 
 1- defining our binding in the service provider :
 
@@ -215,13 +217,20 @@ $binder->implicitBind('App\Repositories', '', 'Repository', 'findForRoute');
 
 ```PHP
 $app->get('articles/{article}', function(\App\Article $article) {
-    return view('articles.index', compact('article'));
+    return view('articles.view', compact('article'));
 });
 ```
 
 3- Adding our custom method in our repository in `apps/Repositories/ArticleRepository.php` :
 
 ```PHP
+/**
+ * Find the Article for route-model-bining
+ *
+ * @param  string $val  wildcard value
+ *
+ * @return \App\Article
+ */
 public function findForRoute($val)
 {
     return $this->model->where('slug', $val)->firstOrFail();
