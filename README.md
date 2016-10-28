@@ -20,7 +20,7 @@ composer require mmghv/lumen-route-binding "^1.0"
 
 > Requires
 > ```
-> php >= 4.5.0
+> php >= 5.4.0
 > Lumen 5.*
 > ```
 
