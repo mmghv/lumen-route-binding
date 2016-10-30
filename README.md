@@ -34,7 +34,7 @@ $app->register('mmghv\LumenRouteBinding\RouteBindingServiceProvider');
 
 > Route model binding provides a convenient way to automatically inject the model instances directly into your routes. For example, instead of injecting a user's ID, you can inject the entire `User` model instance that matches the given ID.
 
-### Where to define our bindings
+### Where to Define our Bindings
 
 We can define our `bindings` in `bootstrap/app.php` after registering the package's service provider, **Or better**, We can create a service provider that extendes the package's service provider :
 
@@ -52,8 +52,8 @@ class RouteBindingServiceProvider extends BaseServiceProvider
      */
     public function boot()
     {
-        // Get the binder instance
-        $binder = $this->app['bindingResolver'];
+        // The binder instance
+        $binder = $this->binder;
 
         // Here we define our bindings
     }
@@ -66,18 +66,25 @@ And place it in `app/Providers` then register this provider rather than the pack
 $app->register('app/Providers/RouteBindingServiceProvider');
 ```
 
-This way, We can define our `bindings` in that service provider (in the `boot` method).
+This way, We can define our `bindings` in a dedicated service provider (in the `boot` method).
 
-### Defining the bindings
+### Defining the Bindings
 
-First, we get the binder instance used to define the bindings from the `IoC` container :
+If we are in our service provider (extended from the package's one), Then we have a direct access to the `Binder` instance used to define the bindings :
+
+```PHP
+$binder = $this->binder;
+```
+
+But if you like to define your bindings in `bootstrap/app.php`, Then you will need to retrieve the `Binder` instance from the `IoC Container` like this :
+
 ```PHP
 $binder = $this->app['bindingResolver'];
 ```
 
-Then we define our bindings, we have **two** types of bindings:
+Then we define our bindings, we have **Three** types of bindings:
 
-#### 1) Explicit binding
+#### 1) Explicit Binding
 
 We can explicitly bind a route wildcard name to a specific model using the `bind` method :
 
@@ -116,17 +123,21 @@ public function getRouteKeyName()
 }
 ```
 
-##### Using a custom resolver closure :
+##### Using a Custom Resolver Callback :
 
-If you wish to use your own resolution logic, you may pass a closure instead of the class name to the `bind` method, The closure will receive the value of the URI segment and should return the instance of the class that should be injected into the route :
+If you wish to use your own resolution logic, you may pass a `Class@method` callable style or a `Closure` instead of the class name to the `bind` method, The callable will receive the value of the URI segment and should return the instance of the class that should be injected into the route :
 
 ```PHP
+// Using a 'Class@method' callable style
+$binder->bind('article', 'App\Article@findForRoute');
+
+// Using a closure
 $binder->bind('article', function($value) {
     return \App\Article::where('slug', $value)->firstOrFail();
 });
 ```
 
-##### Handling the `NotFound` exception :
+##### Handling the `NotFound` Exception :
 
 If no model found with the given key, The Eloquent `firstOrFail` will throw a `ModelNotFoundException`, To handle this exception, We can pass a closure as the third parameter to the `bind` method :
 
@@ -134,12 +145,13 @@ If no model found with the given key, The Eloquent `firstOrFail` will throw a `M
 $binder->bind('article', 'App\Article', function($e) {
     // We can return a default value if the model not found :
     return new \App\Article();
+
     // Or we can throw another exception for example :
-    throw new NotFoundHttpException;
+    throw new \NotFoundHttpException;
 });
 ```
 
-#### 2) Implicit binding
+#### 2) Implicit Binding
 
 Using the `implicitBind` method, We can tell the binder to automatically bind all the models in a given namespace :
 
@@ -173,7 +185,7 @@ public function getRouteKeyName()
 }
 ```
 
-##### Implicit binding with repositories
+##### Implicit Binding with Repositories
 
 We can use implicit binding with classes other than the `Eloquent` models, For example if we use something like `Repository Pattern` and would like our bindings to use the repository classes instead of the Eloquent models, We can do that.
 
@@ -195,7 +207,7 @@ $app->get('articles/{article}', function($myArticle) {
 
 The binder will check if the following class exists `App\Repositories\EloquentArticleRepository` (The namespace + prefix + ucFirst(the key) + suffix), If it finds it, Then it will call `firstOrFail` using the column from `getRouteKeyName()` (so you should have these methods on your repository).
 
-##### Using custom method
+##### Using Custom Method
 
 If you want to use a custom method on your class to retrieve the model instance, You can pass the method name as the fourth parameter :
 
@@ -205,7 +217,7 @@ $binder->implicitBind('App\Repositories', 'Eloquent', 'Repository', 'findForRout
 
 This way, The binder will call the custom method `findForRoute` on our repository passing the route wildcard value and expecting it to return the resolved instance.
 
-###### Example of using a custom method with implicit binding while using the repository pattern :
+###### Example of using a custom method with Implicit Binding while using the Repository Pattern :
 
 1- defining our binding in the service provider :
 
@@ -216,7 +228,7 @@ $binder->implicitBind('App\Repositories', '', 'Repository', 'findForRoute');
 2- defining our route in `routes.php` :
 
 ```PHP
-$app->get('articles/{article}', function(\App\Article $article) {
+$app->get('articles/{article}', function(App\Article $article) {
     return view('articles.view', compact('article'));
 });
 ```
@@ -237,7 +249,7 @@ public function findForRoute($val)
 }
 ```
 
-##### Handling the `NotFound` exception :
+##### Handling the `NotFound` Exception :
 
 Like explicit binding, We can handle the exception thrown in the resolver method (the model `firstOrFail` or in our repository) by passing a closure as the fifth parameter to the method `implicitBind` :
 
@@ -247,14 +259,55 @@ $binder->implicitBind('App\Repositories', '', 'Repository', 'findForRoute', func
 });
 ```
 
-## TODO
-* Add `Composite Binding` (bind and resolve multiple wildcard combined).
-* Allow use `Class@method` Laravel style as a callable.
+#### 3) Composite Binding
+
+Sometimes, you will have a route of two or more levels that contains wildcards of related models, Something like :
+
+```PHP
+$app->get('posts/{post}/comments/{comment}', function(App\Post $post, App\Comment $comment) {
+    //
+});
+```
+
+In this example, If we use explicit or implicit binding, Each model will be resolved individually with no relation to each other, Sometimes that's OK, But what if we want to resolve these models in one binding to handle the relationship between them and maybe do a proper eager loading without repeating the process for each model individually, That's where `Composite Binding` comes into play.
+
+In `Composite Binding` we tell the binder to register a binding for more than one model in a specific order.
+
+We use the method `compositeBind` passing an array of wildcards names as the first parameter, and a resolver callback (either a closure or a 'Class@method' callable style) as the second parameter.
+
+```PHP
+// Using a 'Class@method' callable style
+$binder->compositeBind(['post', 'comment'], 'App\Repositories\PostRepository@findPostCommentForRoute');
+
+// Using a closure
+$binder->compositeBind(['post', 'comment'], function($postKey, $commentKey) {
+    $post = \App\Post::findOrFail($postKey);
+    $comment = $post->comments()->findOrFail($commentKey);
+
+    return [$post, $comment];
+});
+```
+
+**Note:**
+This binding will match the route that has **only** and **exactly** the given wildcards (in this case `{post}` and `{comment}`) and they appear in the same exact **order**. The resolver callback will be handled the wildcards values and **MUST** return the resolved models in an array of the same count and order of the wildcards.
+
+**Note:**
+This type of binding takes a priority over any other type of binding, Meaning that in the previous example if we have an explicit or implicit binding for `post` and\or `comment`, None of them will match as long as the route matches a composite binding.
+
+##### Handling the `NotFound` Exception :
+
+Like explicit and implicit binding, We can handle the exception thrown in the resolver callback by passing a closure as the third parameter to the method `compositeBind` :
+
+```PHP
+$binder->compositeBind(['department', 'section'], 'App\Department@getDepartmentAndSection', function($e) {
+    // Do something with the exception
+});
+```
 
 ## Contributing
 Please report an [Issue](https://github.com/mmghv/lumen-route-binding/issues) if you found any.
 
-Pull Requests are welcome, just make sure to follow the PSR-2 standards and don't forget to add tests for any added functionality.
+Pull Requests are welcome, just make sure to follow the PSR-2 standards and don't forget to add tests.
 
 ## License & Copyright
 
