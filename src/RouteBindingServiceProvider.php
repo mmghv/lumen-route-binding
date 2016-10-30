@@ -6,30 +6,35 @@ use Illuminate\Support\ServiceProvider;
 class RouteBindingServiceProvider extends ServiceProvider
 {
     /**
-     * Register RouteModelBinding service by registering out custom dispatcher.
+     * The binder instance
+     *
+     * @var mmghv\LumenRouteBinding\BindingResolver
+     */
+    protected $binder;
+
+    /**
+     * Register the service by registering our custom dispatcher.
      */
     public function register()
     {
-        $app = $this->app;
-
         // Register our binding resolver in the service container
-        $bindingResolver = new BindingResolver([$app, 'make']);
-        $app->instance('bindingResolver', $bindingResolver);
+        $this->binder = new BindingResolver([$this->app, 'make']);
+        $this->app->instance('bindingResolver', $this->binder);
 
         // Create a new FastRoute dispatcher (our extended one)
         $dispatcher = new FastRouteDispatcher(null);
 
-        $dispatcher->setBindingResolver($bindingResolver);
+        $dispatcher->setBindingResolver($this->binder);
         $dispatcher->setDispatcherResolver($this->getDispatcherResolver());
 
         // Set our dispatcher to be used in the application instead of the default one
-        $app->setDispatcher($dispatcher);
+        $this->app->setDispatcher($dispatcher);
     }
 
     /**
-     * Get the original FastRoute dispatcher resolver callable
+     * Get the original FastRoute dispatcher resolver callback
      *
-     * @return callable
+     * @return \Closure
      */
     protected function getDispatcherResolver()
     {
