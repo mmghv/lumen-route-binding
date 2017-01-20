@@ -8,7 +8,7 @@ class RouteBindingServiceProvider extends ServiceProvider
     /**
      * The binder instance
      *
-     * @var mmghv\LumenRouteBinding\BindingResolver
+     * @var BindingResolver
      */
     protected $binder;
 
