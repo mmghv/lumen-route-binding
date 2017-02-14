@@ -1,13 +1,13 @@
 # Lumen Route Binding
 
 [![Build Status](https://travis-ci.org/mmghv/lumen-route-binding.svg?branch=master)](https://travis-ci.org/mmghv/lumen-route-binding)
-[![Lumen Version](https://img.shields.io/badge/Lumen-5.0%20to%205.3-orange.svg)](https://packagist.org/packages/mmghv/lumen-route-binding) 
+[![Lumen Version](https://img.shields.io/badge/Lumen-5.0%20to%205.4-orange.svg)](https://packagist.org/packages/mmghv/lumen-route-binding) 
 [![Latest Stable Version](https://poser.pugx.org/mmghv/lumen-route-binding/v/stable)](https://packagist.org/packages/mmghv/lumen-route-binding)
 [![Total Downloads](https://poser.pugx.org/mmghv/lumen-route-binding/downloads)](https://packagist.org/packages/mmghv/lumen-route-binding)
 [![Latest Unstable Version](https://poser.pugx.org/mmghv/lumen-route-binding/v/unstable)](https://packagist.org/packages/mmghv/lumen-route-binding)
 [![License](https://poser.pugx.org/mmghv/lumen-route-binding/license)](https://packagist.org/packages/mmghv/lumen-route-binding)
 
-This package Adds support for `Route Model Binding` in Lumen (5.0 to 5.3).
+This package Adds support for `Route Model Binding` in Lumen (5.0 to 5.4).
 
 > As known, Lumen doesn't support `Route Model Binding` out of the box due to the fact that Lumen doesn't use the Illuminate router that Laravel uses, Instead, It uses the [FastRoute](https://github.com/nikic/FastRoute) which is much faster. With this package, We add support for the powerful `Route Model Binding` while still benefit the speed of the FastRoute in Lumen.
 
@@ -273,7 +273,7 @@ In this example, If we use explicit or implicit binding, Each model will be reso
 
 In `Composite Binding` we tell the binder to register a binding for more than one model in a specific order.
 
-We use the method `compositeBind` passing an array of wildcards names as the first parameter, and a resolver callback (either a closure or a 'Class@method' callable style) as the second parameter.
+We use the method `compositeBind` passing an array of wildcards names as the first parameter, and a resolver callback (either a closure or a `Class@method` callable style) as the second parameter.
 
 ```PHP
 // Using a 'Class@method' callable style
@@ -292,7 +292,7 @@ $binder->compositeBind(['post', 'comment'], function($postKey, $commentKey) {
 This binding will match the route that has **only** and **exactly** the given wildcards (in this case `{post}` and `{comment}`) and they appear in the same exact **order**. The resolver callback will be handled the wildcards values and **MUST** return the resolved models in an array of the same count and order of the wildcards.
 
 **Note:**
-This type of binding takes a priority over any other type of binding, Meaning that in the previous example if we have an explicit or implicit binding for `post` and\or `comment`, None of them will match as long as the route matches a composite binding.
+This type of binding takes a priority over any other type of binding, Meaning that in the previous example if we have an explicit or implicit binding for `post` and\or `comment`, None of them will take place as long as the route matches a composite binding.
 
 ##### Handling the `NotFound` Exception :
 
