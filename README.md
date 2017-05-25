@@ -36,7 +36,7 @@ $app->register('mmghv\LumenRouteBinding\RouteBindingServiceProvider');
 
 ### Where to Define our Bindings
 
-We can define our `bindings` in `bootstrap/app.php` after registering the package's service provider, **Or better**, We can create a service provider that extendes the package's service provider :
+We can define our `bindings` in `bootstrap/app.php` after registering the package's service provider, **Or better**, We can create a dedicated service provider that extendes the package's service provider :
 
 ```PHP
 // app/Providers/RouteBindingServiceProvider.php
@@ -63,7 +63,7 @@ class RouteBindingServiceProvider extends BaseServiceProvider
 And place it in `app/Providers` then register this provider rather than the package's one in `bootstrap/app.php` :
 
 ```PHP
-$app->register('app/Providers/RouteBindingServiceProvider');
+$app->register('App\Providers\RouteBindingServiceProvider');
 ```
 
 This way, We can define our `bindings` in a dedicated service provider (in the `boot` method).

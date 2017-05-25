@@ -15,7 +15,7 @@ class IntegratedTest extends \PHPUnit_Framework_TestCase
         // Create new Lumen application
         $app = new Application;
 
-        // Register out RouteBinding service provider
+        // Register our RouteBinding service provider
         $app->register('mmghv\LumenRouteBinding\RouteBindingServiceProvider');
 
         // Get the binder instance
