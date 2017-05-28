@@ -1,11 +1,11 @@
 # Lumen Route Binding
 
 [![Build Status](https://travis-ci.org/mmghv/lumen-route-binding.svg?branch=master)](https://travis-ci.org/mmghv/lumen-route-binding)
-[![Lumen Version](https://img.shields.io/badge/Lumen-5.0%20to%205.4-orange.svg)](https://packagist.org/packages/mmghv/lumen-route-binding) 
+[![Lumen Version](https://img.shields.io/badge/Lumen-5.0%20to%205.4-orange.svg)](https://github.com/laravel/lumen) 
 [![Latest Stable Version](https://poser.pugx.org/mmghv/lumen-route-binding/v/stable)](https://packagist.org/packages/mmghv/lumen-route-binding)
 [![Total Downloads](https://poser.pugx.org/mmghv/lumen-route-binding/downloads)](https://packagist.org/packages/mmghv/lumen-route-binding)
 [![Latest Unstable Version](https://poser.pugx.org/mmghv/lumen-route-binding/v/unstable)](https://packagist.org/packages/mmghv/lumen-route-binding)
-[![License](https://poser.pugx.org/mmghv/lumen-route-binding/license)](https://packagist.org/packages/mmghv/lumen-route-binding)
+[![License](https://poser.pugx.org/mmghv/lumen-route-binding/license)](LICENSE)
 
 This package Adds support for `Route Model Binding` in Lumen (5.0 to 5.4).
 
@@ -24,11 +24,10 @@ composer require mmghv/lumen-route-binding "^1.0"
 > Lumen 5.*
 > ```
 
-#### Register the service provider in `bootstrap/app.php`
+#### Register the service provider
 
-```PHP
-$app->register('mmghv\LumenRouteBinding\RouteBindingServiceProvider');
-```
+You have 2 options, continue reading ..
+
 
 ## Usage
 
@@ -36,7 +35,25 @@ $app->register('mmghv\LumenRouteBinding\RouteBindingServiceProvider');
 
 ### Where to Define our Bindings
 
-We can define our `bindings` in `bootstrap/app.php` after registering the package's service provider, **Or better**, We can create a dedicated service provider that extendes the package's service provider :
+As mentioned before, You have 2 options :
+
+#### OPTION 1
+
+To register the service provider included with the package and define your bindings in `bootstrap/app.php` :
+
+```PHP
+// Register the package's service provider
+$app->register('mmghv\LumenRouteBinding\RouteBindingServiceProvider');
+
+// Get the $binder instance from the IoC Container
+$binder = $app['bindingResolver'];
+
+// Then define your bindings here ..
+```
+
+#### OPTION 2 (better)
+
+To create a dedicated service provider that extendes the package's one and place it in `app/Providers` :
 
 ```PHP
 // app/Providers/RouteBindingServiceProvider.php
@@ -60,7 +77,7 @@ class RouteBindingServiceProvider extends BaseServiceProvider
 }
 ```
 
-And place it in `app/Providers` then register this provider rather than the package's one in `bootstrap/app.php` :
+Then register this provider rather than the package's one in `bootstrap/app.php` :
 
 ```PHP
 $app->register('App\Providers\RouteBindingServiceProvider');
@@ -70,19 +87,7 @@ This way, We can define our `bindings` in a dedicated service provider (in the `
 
 ### Defining the Bindings
 
-If we are in our service provider (extended from the package's one), Then we have a direct access to the `Binder` instance used to define the bindings :
-
-```PHP
-$binder = $this->binder;
-```
-
-But if you like to define your bindings in `bootstrap/app.php`, Then you will need to retrieve the `Binder` instance from the `IoC Container` like this :
-
-```PHP
-$binder = $this->app['bindingResolver'];
-```
-
-Then we define our bindings, we have **Three** types of bindings:
+We have **Three** types of bindings:
 
 #### 1) Explicit Binding
 
@@ -305,7 +310,7 @@ $binder->compositeBind(['department', 'section'], 'App\Department@getDepartmentA
 ```
 
 ## Contributing
-Please report an [Issue](https://github.com/mmghv/lumen-route-binding/issues) if you found any.
+If you found an issue, Please report it [here](https://github.com/mmghv/lumen-route-binding/issues).
 
 Pull Requests are welcome, just make sure to follow the PSR-2 standards and don't forget to add tests.
 
