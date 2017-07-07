@@ -2,7 +2,10 @@
 namespace Tests;
 
 use Mockery as m;
+use FastRoute\RouteCollector;
+use FastRoute\RouteParser\Std as RouteParser;
 use mmghv\LumenRouteBinding\FastRouteDispatcher;
+use FastRoute\DataGenerator\GroupCountBased as DataGenerator;
 
 class FastRouteDispatcherTest extends \PHPUnit_Framework_TestCase
 {
@@ -29,9 +32,6 @@ class FastRouteDispatcherTest extends \PHPUnit_Framework_TestCase
         $this->assertBaseDispatcher('construct', null);
 
         $this->dispatcher->setBindingResolver($this->binder);
-        $this->dispatcher->setDispatcherResolver(function ($dispatcher) {
-            return new $dispatcher($this->routeData);
-        });
     }
 
     public function tearDown()
@@ -43,7 +43,17 @@ class FastRouteDispatcherTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * Assert method calls on the base FastRoute dispatcher
+     * Set routes resolver callback on the dispatcher.
+     */
+    public function setRoutesResolver()
+    {
+        $this->dispatcher->setRoutesResolver(function () {
+            return [null, $this->routeData];
+        });
+    }
+
+    /**
+     * Assert method calls on the base FastRoute dispatcher.
      *
      * @param  string $method
      * @param  ...  $args
@@ -88,6 +98,9 @@ class FastRouteDispatcherTest extends \PHPUnit_Framework_TestCase
             'vars' => ['myVars']
         ];
 
+        // Set the routes resolver
+        $this->setRoutesResolver();
+
         // Expect the binding resolver to be called with the route variables returned from the base dispatcher
         $this->binder->shouldReceive('resolveBindings')->once()
              ->with($this->routeData['vars'])->andReturn(['myVars resolved']);
@@ -95,14 +108,95 @@ class FastRouteDispatcherTest extends \PHPUnit_Framework_TestCase
         // Call the dispatcher (what the application will do)
         $result = $this->dispatcher->dispatch('httpMethod', 'uri');
 
-        // Assert that our dispatcher created new instance with the routeData
-        $this->assertBaseDispatcher('construct', $this->routeData);
+        // Assert that our dispatcher passed the 'dispatch' method to the base dispatcher
+        $this->assertBaseDispatcher('dispatch', 'httpMethod', 'uri');
+
+        // Assert that the method 'dispatchVariableRoute' called on the base dispatcher with the correct data
+        $this->assertBaseDispatcher('dispatchVariableRoute', $this->routeData, 'uri');
+
+        // Assert that our dispatcher replaced the variables with the resolved ones
+        $this->assertSame($result, [1 => 'data', 2 => ['myVars resolved']], '-> Expected the dispatcher to replace the variables with the resolved ones!');
+    }
+
+    public function testDispatcherCanAcceptRoutesOnConstructWithoutResolver()
+    {
+        // Assert no calls on the base dispatcher
+        $this->assertBaseDispatcher(null);
+
+        $this->routeData = [
+            'routes' => 'myRoutes',
+            'vars' => ['myVars']
+        ];
+
+        // Pass routes data on construct and don't use routes resolver
+        $this->dispatcher = new FastRouteDispatcher([null, $this->routeData]);
+        $this->assertBaseDispatcher('construct', [null, $this->routeData]);
+
+        $this->dispatcher->setBindingResolver($this->binder);
+
+        // Expect the binding resolver to be called with the route variables returned from the base dispatcher
+        $this->binder->shouldReceive('resolveBindings')->once()
+             ->with($this->routeData['vars'])->andReturn(['myVars resolved']);
+
+        // Call the dispatcher (what the application will do)
+        $result = $this->dispatcher->dispatch('httpMethod', 'uri');
 
         // Assert that our dispatcher passed the 'dispatch' method to the base dispatcher
         $this->assertBaseDispatcher('dispatch', 'httpMethod', 'uri');
 
         // Assert that the method 'dispatchVariableRoute' called on the base dispatcher with the correct data
         $this->assertBaseDispatcher('dispatchVariableRoute', $this->routeData, 'uri');
+
+        // Assert that our dispatcher replaced the variables with the resolved ones
+        $this->assertSame($result, [1 => 'data', 2 => ['myVars resolved']], '-> Expected the dispatcher to replace the variables with the resolved ones!');
+    }
+
+    public function testDispatcherCanChangeRoutesWithResolver()
+    {
+        // Assert no calls on the base dispatcher
+        $this->assertBaseDispatcher(null);
+
+        $this->routeData = [
+            'routes' => 'myRoutes',
+            'vars' => ['myVars']
+        ];
+
+        // Pass routes data on construct
+        $this->dispatcher = new FastRouteDispatcher([null, $this->routeData]);
+        $this->assertBaseDispatcher('construct', [null, $this->routeData]);
+
+        $this->dispatcher->setBindingResolver($this->binder);
+
+        $this->routeData = [
+            'routes' => 'myRoutes2',
+            'vars' => ['myVars2']
+        ];
+
+        // Set the routes resolver to change the routes
+        $this->setRoutesResolver();
+
+        $newRouteData = [
+            'routes' => 'myRoutes3',
+            'vars' => ['myVars3']
+        ];
+
+        // Set a new routes resolver to change the routes again
+        $this->dispatcher->setRoutesResolver(function() use ($newRouteData) {
+            return [null, $newRouteData];
+        });
+
+        // Expect the binding resolver to be called with the last route variables set by the resolver
+        $this->binder->shouldReceive('resolveBindings')->once()
+             ->with($newRouteData['vars'])->andReturn(['myVars resolved']);
+
+        // Call the dispatcher (what the application will do)
+        $result = $this->dispatcher->dispatch('httpMethod', 'uri');
+
+        // Assert that our dispatcher passed the 'dispatch' method to the base dispatcher
+        $this->assertBaseDispatcher('dispatch', 'httpMethod', 'uri');
+
+        // Assert that the method 'dispatchVariableRoute' called on the base dispatcher with the correct data
+        $this->assertBaseDispatcher('dispatchVariableRoute', $newRouteData, 'uri');
 
         // Assert that our dispatcher replaced the variables with the resolved ones
         $this->assertSame($result, [1 => 'data', 2 => ['myVars resolved']], '-> Expected the dispatcher to replace the variables with the resolved ones!');
@@ -119,11 +213,13 @@ class FastRouteDispatcherTest extends \PHPUnit_Framework_TestCase
             'vars' => null
         ];
 
+        // Set the routes resolver
+        $this->setRoutesResolver();
+
         // Call the dispatcher (what the application will do)
         $result = $this->dispatcher->dispatch('httpMethod', 'uri');
 
         // Assert calls on the base dispatcher
-        $this->assertBaseDispatcher('construct', $this->routeData);
         $this->assertBaseDispatcher('dispatch', 'httpMethod', 'uri');
         $this->assertBaseDispatcher('dispatchVariableRoute', $this->routeData, 'uri');
 
@@ -142,13 +238,15 @@ class FastRouteDispatcherTest extends \PHPUnit_Framework_TestCase
             'vars' => ['myVars']
         ];
 
+        // Set the routes resolver
+        $this->setRoutesResolver();
+
         $this->dispatcher->setBindingResolver(null);
 
         // Call the dispatcher (what the application will do)
         $result = $this->dispatcher->dispatch('httpMethod', 'uri');
 
         // Assert calls on the base dispatcher
-        $this->assertBaseDispatcher('construct', $this->routeData);
         $this->assertBaseDispatcher('dispatch', 'httpMethod', 'uri');
         $this->assertBaseDispatcher('dispatchVariableRoute', $this->routeData, 'uri');
 
@@ -159,14 +257,15 @@ class FastRouteDispatcherTest extends \PHPUnit_Framework_TestCase
 
 class GroupCountBasedStub
 {
-    protected $routeData;
+    protected $staticRouteMap;
+    protected $variableRouteData;
 
     public function __construct($data)
     {
         // Record the call to the method
         $GLOBALS['baseDispacherAssertions'][] = ['construct', $data];
 
-        $this->routeData = $data;
+        list($this->staticRouteMap, $this->variableRouteData) = $data;
     }
 
     public function dispatch($httpMethod, $uri)
@@ -175,7 +274,7 @@ class GroupCountBasedStub
         $GLOBALS['baseDispacherAssertions'][] = ['dispatch', $httpMethod, $uri];
 
         // Call the method dispatchVariableRoute
-        return $this->dispatchVariableRoute($this->routeData, $uri);
+        return $this->dispatchVariableRoute($this->variableRouteData, $uri);
     }
 
     protected function dispatchVariableRoute($routeData, $uri)

@@ -1,7 +1,10 @@
 <?php
 namespace mmghv\LumenRouteBinding;
 
+use FastRoute\RouteCollector;
 use Illuminate\Support\ServiceProvider;
+use FastRoute\RouteParser\Std as RouteParser;
+use FastRoute\DataGenerator\GroupCountBased as DataGenerator;
 
 class RouteBindingServiceProvider extends ServiceProvider
 {
@@ -13,6 +16,13 @@ class RouteBindingServiceProvider extends ServiceProvider
     protected $binder;
 
     /**
+     * The dispatcher instance
+     *
+     * @var FastRouteDispatcher
+     */
+    protected $dispatcher;
+
+    /**
      * Register the service by registering our custom dispatcher.
      */
     public function register()
@@ -22,30 +32,39 @@ class RouteBindingServiceProvider extends ServiceProvider
         $this->app->instance('bindingResolver', $this->binder);
 
         // Create a new FastRoute dispatcher (our extended one)
-        $dispatcher = new FastRouteDispatcher(null);
+        // with no routes data at the moment because routes file is not loaded yet
+        $this->dispatcher = new FastRouteDispatcher(null);
 
-        $dispatcher->setBindingResolver($this->binder);
-        $dispatcher->setDispatcherResolver($this->getDispatcherResolver());
+        // Set binding resolver
+        $this->dispatcher->setBindingResolver($this->binder);
 
-        // Set our dispatcher to be used in the application instead of the default one
-        $this->app->setDispatcher($dispatcher);
+        // Set routes resolver (will be called when request is dispatched and the routes file is loaded)
+        $this->dispatcher->setRoutesResolver($this->getRoutesResolver());
+
+        // Set our dispatcher to be used by the application instead of the default one
+        $this->app->setDispatcher($this->dispatcher);
+
+        // Save the dispatcher in the container in case someone needs it later (you're welcome)
+        $this->app->instance('dispatcher', $this->dispatcher);
     }
 
     /**
-     * Get the original FastRoute dispatcher resolver callback
+     * Get route resolver used to get routes data when the request is dispatched.
      *
      * @return \Closure
      */
-    protected function getDispatcherResolver()
+    protected function getRoutesResolver()
     {
-        return function ($dispatcher) {
-            return \FastRoute\simpleDispatcher(function ($r) {
-                foreach ($this->app->getRoutes() as $route) {
-                    $r->addRoute($route['method'], $route['uri'], $route['action']);
-                }
-            }, [
-                'dispatcher' => $dispatcher
-            ]);
+        return function () {
+            // Create fast-route collector
+            $routeCollector = new RouteCollector(new RouteParser, new DataGenerator);
+
+            // Get routes data from application
+            foreach ($this->app->getRoutes() as $route) {
+                $routeCollector->addRoute($route['method'], $route['uri'], $route['action']);
+            }
+
+            return $routeCollector->getData();
         };
     }
 }
