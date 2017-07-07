@@ -18,7 +18,7 @@ This package Adds support for `Route Model Binding` in Lumen (5.0 to 5.4).
     * [Explicit Binding](#1-explicit-binding)
     * [Implicit Binding](#2-implicit-binding)
     * [Composite Binding](#3-composite-binding)
-  * [DingoAPI Integration](#dingoapi-Integration)
+  * [DingoAPI Integration](#dingoapi-integration)
   
 ## Installation
 
@@ -413,7 +413,7 @@ $app->register(Dingo\Api\Provider\LumenServiceProvider::class);
 $app->register(App\Providers\DingoServiceProvider::class);
 ```
 
-And don't forget to register the LumenRoutebinding service provider itself 
+And don't forget to register the `LumenRouteBinding` service provider itself 
 
 ```PHP
 $app->register(App\Providers\RouteBindingServiceProvider::class);
