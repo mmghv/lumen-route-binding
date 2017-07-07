@@ -11,6 +11,15 @@ This package Adds support for `Route Model Binding` in Lumen (5.0 to 5.4).
 
 > As known, Lumen doesn't support `Route Model Binding` out of the box due to the fact that Lumen doesn't use the Illuminate router that Laravel uses, Instead, It uses the [FastRoute](https://github.com/nikic/FastRoute) which is much faster. With this package, We add support for the powerful `Route Model Binding` while still benefit the speed of the FastRoute in Lumen.
 
+# Table of Contents
+
+  * [Installation](#installation)
+  * [Defining the binding](#where-to-define-our-bindings)
+    * [Explicit Binding](#1-explicit-binding)
+    * [Implicit Binding](#2-implicit-binding)
+    * [Composite Binding](#3-composite-binding)
+  * [DingoAPI Integration](#dingoapi-Integration)
+  
 ## Installation
 
 #### Using composer
@@ -97,7 +106,7 @@ We can explicitly bind a route wildcard name to a specific model using the `bind
 $binder->bind('user', 'App\User');
 ```
 
-This way, Anywhere in our routes if the wildcard `user` is found, It will be resolved to the `User` model instance that corresponds to the wildcard value, So we can define our route like this :
+This way, Anywhere in our routes if the wildcard `{user}` is found, It will be resolved to the `User` model instance that corresponds to the wildcard value, So we can define our route like this :
 
 ```PHP
 $app->get('profile/{user}', function(App\User $user) {
@@ -176,7 +185,7 @@ The binder will first check for any **explicit binding** that matches the `artic
 
 ##### Customizing The Key Name
 
-Like explicit binding, we could specify another column to be used to retrieve the model instance by overriding the `getRouteKeyName` method on the Eloquent model :
+Similar to binding, we could specify another column to be used to retrieve the model instance by overriding the `getRouteKeyName` method on the Eloquent model :
 
 ```PHP
 /**
@@ -194,7 +203,7 @@ public function getRouteKeyName()
 
 We can use implicit binding with classes other than the `Eloquent` models, For example if we use something like `Repository Pattern` and would like our bindings to use the repository classes instead of the Eloquent models, We can do that.
 
-The problem is that the repository classes names usually use a `Prefix` and\or `Suffix` beside the Eloquent model name, For example, The `Article` Eloquent model, Has a corresponding repository class with the name `EloquentArticleRepository`, We can set our implicit binding to use this prefix and\or suffix like this :
+The problem is that the repository classes names usually use a `Prefix` and\or `Suffix` beside the Eloquent model name, For example, The `Article` Eloquent model, May have a corresponding repository class with the name `EloquentArticleRepository`, We can set our implicit binding to use this prefix and\or suffix like this :
 
 ```PHP
 $binder->implicitBind('App\Repositories', 'Eloquent', 'Repository');
@@ -210,7 +219,7 @@ $app->get('articles/{article}', function($myArticle) {
 });
 ```
 
-The binder will check if the following class exists `App\Repositories\EloquentArticleRepository` (The namespace + prefix + ucFirst(the key) + suffix), If it finds it, Then it will call `firstOrFail` using the column from `getRouteKeyName()` (so you should have these methods on your repository).
+The binder will check if the following class exists `App\Repositories\EloquentArticleRepository` (The namespace + prefix + ucFirst(the key) + suffix), If it finds it, Then it will call `firstOrFail()` using the column from `getRouteKeyName()` (so you should have these methods on your repository).
 
 ##### Using Custom Method
 
@@ -256,7 +265,7 @@ public function findForRoute($val)
 
 ##### Handling the `NotFound` Exception :
 
-Like explicit binding, We can handle the exception thrown in the resolver method (the model `firstOrFail` or in our repository) by passing a closure as the fifth parameter to the method `implicitBind` :
+Similar to binding, We can handle the exception thrown in the resolver method (the model `firstOrFail` or in our repository) by passing a closure as the fifth parameter to the method `implicitBind` :
 
 ```PHP
 $binder->implicitBind('App\Repositories', '', 'Repository', 'findForRoute', function($e) {
@@ -276,7 +285,7 @@ $app->get('posts/{post}/comments/{comment}', function(App\Post $post, App\Commen
 
 In this example, If we use explicit or implicit binding, Each model will be resolved individually with no relation to each other, Sometimes that's OK, But what if we want to resolve these models in one binding to handle the relationship between them and maybe do a proper eager loading without repeating the process for each model individually, That's where `Composite Binding` comes into play.
 
-In `Composite Binding` we tell the binder to register a binding for more than one model in a specific order.
+In `Composite Binding` we tell the binder to register a binding for multiple wildcards in a specific order.
 
 We use the method `compositeBind` passing an array of wildcards names as the first parameter, and a resolver callback (either a closure or a `Class@method` callable style) as the second parameter.
 
@@ -297,17 +306,120 @@ $binder->compositeBind(['post', 'comment'], function($postKey, $commentKey) {
 This binding will match the route that has **only** and **exactly** the given wildcards (in this case `{post}` and `{comment}`) and they appear in the same exact **order**. The resolver callback will be handled the wildcards values and **MUST** return the resolved models in an array of the same count and order of the wildcards.
 
 **Note:**
-This type of binding takes a priority over any other type of binding, Meaning that in the previous example if we have an explicit or implicit binding for `post` and\or `comment`, None of them will take place as long as the route matches a composite binding.
+This type of binding takes a priority over any other type of binding, Meaning that in the previous example if we have an explicit or implicit binding for `post` and\or `comment`, None of them will take place as long as the route **as whole** matches a composite binding.
 
 ##### Handling the `NotFound` Exception :
 
-Like explicit and implicit binding, We can handle the exception thrown in the resolver callback by passing a closure as the third parameter to the method `compositeBind` :
+Similar to and implicit binding, We can handle the exception thrown in the resolver callback by passing a closure as the third parameter to the method `compositeBind` :
 
 ```PHP
 $binder->compositeBind(['department', 'section'], 'App\Department@getDepartmentAndSection', function($e) {
     // Do something with the exception
 });
 ```
+
+## DingoAPI Integration
+
+If you're using [DingoAPI](https://github.com/dingo/api) and want to use `LumenRouteBinding` with it, You will need to extend `DingoAPI` to do that .. so you can do the following :
+
+#### 1- Extent LumenAdapter class
+
+Create the following class named `DingoAdapter` that will extent the class `Dingo\Api\Routing\Adapter\Lumen` and put it somewhere, lets say in `app\Custom` :
+
+```PHP
+// app/Custom/DingoAdapter.php
+
+namespace App\Custom;
+
+use Illuminate\Http\Request;
+use Dingo\Api\Exception\UnknownVersionException;
+use Dingo\Api\Routing\Adapter\Lumen as BaseDingoAdapter;
+
+class DingoAdapter extends BaseDingoAdapter
+{
+    /**
+     * Dispatch a request.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @param string                   $version
+     *
+     * @return mixed
+     */
+    public function dispatch(Request $request, $version)
+    {
+        if (! isset($this->routes[$version])) {
+            throw new UnknownVersionException;
+        }
+
+        $this->removeMiddlewareFromApp();
+
+        $routes = $this->routes[$version];
+
+        // This is what we extended the class for, to use the dispatcher created
+        // by LumenRouteBinding instead of creating a new one.
+        $this->app['dispatcher']->setRoutesResolver(function() use ($routes) {
+            return $routes->getData();
+        });
+
+        $this->normalizeRequestUri($request);
+
+        return $this->app->dispatch($request);
+    }
+}
+```
+
+#### 2- Extent Dingo ServiceProvider
+
+Next we need to extend the service provider to use the custom class, Create the following class in `app/Providers` :
+
+```PHP
+// app/Providers/DingoServiceProvider.php
+
+namespace App\Providers;
+
+use App\Custom\DingoAdapter;
+use FastRoute\RouteParser\Std as StdRouteParser;
+use FastRoute\DataGenerator\GroupCountBased as GcbDataGenerator;
+use Dingo\Api\Provider\LumenServiceProvider as BaseDingoServiceProvider;
+
+class DingoServiceProvider extends BaseDingoServiceProvider
+{
+    /**
+     * Register the service provider.
+     *
+     * @return void
+     */
+    public function register()
+    {
+        parent::register();
+
+        // Replace dingo adapter with an extended one to use the dispatcher from LumenRouteBinding
+        $this->app->singleton('api.router.adapter', function ($app) {
+            return new DingoAdapter($app, new StdRouteParser, new GcbDataGenerator, '');
+        });
+    }
+}
+```
+
+#### 3- Register the custom service provider
+
+Then in `bootstrap/app.php` replace the registeration of `Dingo` service provider with the custom one:
+
+```PHP
+// remove this line
+$app->register(Dingo\Api\Provider\LumenServiceProvider::class);
+
+// and add this line
+$app->register(App\Providers\DingoServiceProvider::class);
+```
+
+And don't forget to register the LumenRoutebinding service provider itself 
+
+```PHP
+$app->register(App\Providers\RouteBindingServiceProvider::class);
+```
+
+That's it, Now you shoud be able to use `LumenRoutebinding` with `DingoAPI`.
 
 ## Contributing
 If you found an issue, Please report it [here](https://github.com/mmghv/lumen-route-binding/issues).
