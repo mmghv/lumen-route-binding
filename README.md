@@ -123,7 +123,7 @@ return $instance->where($instance->getRouteKeyName(), $value)->firstOrFail();
 
 ##### Customizing The Key Name
 
-By default, It will use the model's ID column. Like Laravel, If you would like it to use another column when retrieving a given model class, you may override the `getRouteKeyName` method on the Eloquent model :
+By default, It will use the model's ID column. Similar to Laravel, If you would like it to use another column when retrieving a given model class, you may override the `getRouteKeyName` method on the Eloquent model :
 
 ```PHP
 /**
@@ -185,7 +185,7 @@ The binder will first check for any **explicit binding** that matches the `artic
 
 ##### Customizing The Key Name
 
-Similar to binding, we could specify another column to be used to retrieve the model instance by overriding the `getRouteKeyName` method on the Eloquent model :
+Similar to explicit binding, we could specify another column to be used to retrieve the model instance by overriding the `getRouteKeyName` method on the Eloquent model :
 
 ```PHP
 /**
@@ -265,7 +265,7 @@ public function findForRoute($val)
 
 ##### Handling the `NotFound` Exception :
 
-Similar to binding, We can handle the exception thrown in the resolver method (the model `firstOrFail` or in our repository) by passing a closure as the fifth parameter to the method `implicitBind` :
+Similar to explicit binding, We can handle the exception thrown in the resolver method (the model `firstOrFail` or in our repository) by passing a closure as the fifth parameter to the method `implicitBind` :
 
 ```PHP
 $binder->implicitBind('App\Repositories', '', 'Repository', 'findForRoute', function($e) {
@@ -310,7 +310,7 @@ This type of binding takes a priority over any other type of binding, Meaning th
 
 ##### Handling the `NotFound` Exception :
 
-Similar to and implicit binding, We can handle the exception thrown in the resolver callback by passing a closure as the third parameter to the method `compositeBind` :
+Similar to explicit and implicit binding, We can handle the exception thrown in the resolver callback by passing a closure as the third parameter to the method `compositeBind` :
 
 ```PHP
 $binder->compositeBind(['department', 'section'], 'App\Department@getDepartmentAndSection', function($e) {
@@ -324,7 +324,7 @@ If you're using [DingoAPI](https://github.com/dingo/api) and want to use `LumenR
 
 #### 1- Extent LumenAdapter class
 
-Create the following class named `DingoAdapter` that will extent the class `Dingo\Api\Routing\Adapter\Lumen` and put it somewhere, lets say in `app\Custom` :
+Create the following class named `DingoAdapter` that will extent the class `Dingo\Api\Routing\Adapter\Lumen` and put it somewhere, lets say in `app/Custom` :
 
 ```PHP
 // app/Custom/DingoAdapter.php
