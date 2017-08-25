@@ -14,7 +14,7 @@ This package Adds support for `Route Model Binding` in Lumen (5.0 to 5.4).
 # Table of Contents
 
   * [Installation](#installation)
-  * [Defining the binding](#where-to-define-our-bindings)
+  * [Defining the bindings](#where-to-define-our-bindings)
     * [Explicit Binding](#1-explicit-binding)
     * [Implicit Binding](#2-implicit-binding)
     * [Composite Binding](#3-composite-binding)
@@ -320,9 +320,13 @@ $binder->compositeBind(['department', 'section'], 'App\Department@getDepartmentA
 
 ## DingoAPI Integration
 
-If you're using [DingoAPI](https://github.com/dingo/api) and want to use `LumenRouteBinding` with it, You will need to extend `DingoAPI` to do that .. so you can do the following :
+If you're using [DingoAPI](https://github.com/dingo/api) with Lumen, You'll find that `LumenRouteBinding` is **not** working with it because they use a custom route dispatcher.
+
+Currently, there's a [Pull Request](https://github.com/dingo/api/pull/1408) I issued there to allow the integration with the package,
+But until they apply it, You will need to extend `DingoAPI` to make it work .. so follow these steps :
 
 #### 1- Extent LumenAdapter class
+
 
 Create the following class named `DingoAdapter` that will extent the class `Dingo\Api\Routing\Adapter\Lumen` and put it somewhere, lets say in `app/Custom` :
 
