@@ -325,10 +325,10 @@ If you're using [DingoAPI](https://github.com/dingo/api) with Lumen, You'll find
 Currently, there's a [Pull Request](https://github.com/dingo/api/pull/1408) I issued there to allow the integration with the package,
 But until they apply it, You will need to extend `DingoAPI` to make it work .. so follow these steps :
 
-#### 1- Extent LumenAdapter class
+#### 1- Extend LumenAdapter class
 
 
-Create the following class named `DingoAdapter` that will extent the class `Dingo\Api\Routing\Adapter\Lumen` and put it somewhere, lets say in `app/Custom` :
+Create the following class named `DingoAdapter` that will extend the class `Dingo\Api\Routing\Adapter\Lumen` and put it somewhere, lets say in `app/Custom` :
 
 ```PHP
 // app/Custom/DingoAdapter.php
@@ -372,7 +372,7 @@ class DingoAdapter extends BaseDingoAdapter
 }
 ```
 
-#### 2- Extent Dingo ServiceProvider
+#### 2- Extend Dingo ServiceProvider
 
 Next we need to extend the service provider to use the custom class, Create the following class in `app/Providers` :
 
