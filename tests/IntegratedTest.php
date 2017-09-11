@@ -26,8 +26,10 @@ class IntegratedTest extends \PHPUnit_Framework_TestCase
             return "{$val} Resolved";
         });
 
+        $router = isset($app->router) ? $app->router : $app;
+
         // Register a route with a wildcard
-        $app->get('/{wildcard}', function ($wildcard) {
+        $router->get('/{wildcard}', function ($wildcard) {
             return response($wildcard);
         });
 

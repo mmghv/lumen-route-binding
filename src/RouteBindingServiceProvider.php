@@ -60,11 +60,24 @@ class RouteBindingServiceProvider extends ServiceProvider
             $routeCollector = new RouteCollector(new RouteParser, new DataGenerator);
 
             // Get routes data from application
-            foreach ($this->app->getRoutes() as $route) {
+            foreach ($this->getRoutes() as $route) {
                 $routeCollector->addRoute($route['method'], $route['uri'], $route['action']);
             }
 
             return $routeCollector->getData();
         };
+    }
+
+    /**
+     * Get routes data.
+     *
+     * @return array
+     */
+    protected function getRoutes()
+    {
+        // Support lumen < 5.5 by checking for the router property.
+        $router = property_exists($this->app, 'router') ? $this->app->router : $this->app;
+
+        return $router->getRoutes();
     }
 }
