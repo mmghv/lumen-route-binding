@@ -1,5 +1,5 @@
 <?php
-namespace App\Providers;
+namespace mmghv\LumenRouteBinding;
 
 use Dingo\Api\Provider\LumenServiceProvider as BaseDingoServiceProvider;
 
