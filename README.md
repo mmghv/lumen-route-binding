@@ -62,7 +62,7 @@ $binder = $app['bindingResolver'];
 
 #### OPTION 2 (better)
 
-To create a dedicated service provider that extendes the package's one and place it in `app/Providers` :
+To create a dedicated service provider that extends the package's one and place it in `app/Providers` :
 
 ```PHP
 // app/Providers/RouteBindingServiceProvider.php
@@ -251,7 +251,7 @@ $app->get('articles/{article}', function(App\Article $article) {
 
 ```PHP
 /**
- * Find the Article for route-model-bining
+ * Find the Article for route-model-binding
  *
  * @param  string $val  wildcard value
  *
@@ -320,110 +320,24 @@ $binder->compositeBind(['department', 'section'], 'App\Department@getDepartmentA
 
 ## DingoAPI Integration
 
-If you're using [DingoAPI](https://github.com/dingo/api) with Lumen, You'll find that `LumenRouteBinding` is **not** working with it because they use a custom route dispatcher.
+**NOTE**
+This documentation is for `dingo/api` version `2.*`, for earlier versions of `dingo/api`, follow this [link](https://github.com/mmghv/lumen-route-binding/issues/6).
 
-Currently, there's a [Pull Request](https://github.com/dingo/api/pull/1408) I issued there to allow the integration with the package,
-But until they apply it, You will need to extend `DingoAPI` to make it work .. so follow these steps :
+To integrate `dingo/api` with `LumenRouteBinding`, all you need to do is replace the registration of the default `dingo` service provider with the custom one shipped with `LumenRouteBinding`:
 
-#### 1- Extend LumenAdapter class
-
-
-Create the following class named `DingoAdapter` that will extend the class `Dingo\Api\Routing\Adapter\Lumen` and put it somewhere, lets say in `app/Custom` :
-
+So remove this line in `bootstrap/app.php` :
 ```PHP
-// app/Custom/DingoAdapter.php
-
-namespace App\Custom;
-
-use Illuminate\Http\Request;
-use Dingo\Api\Exception\UnknownVersionException;
-use Dingo\Api\Routing\Adapter\Lumen as BaseDingoAdapter;
-
-class DingoAdapter extends BaseDingoAdapter
-{
-    /**
-     * Dispatch a request.
-     *
-     * @param \Illuminate\Http\Request $request
-     * @param string                   $version
-     *
-     * @return mixed
-     */
-    public function dispatch(Request $request, $version)
-    {
-        if (! isset($this->routes[$version])) {
-            throw new UnknownVersionException;
-        }
-
-        $this->removeMiddlewareFromApp();
-
-        $routes = $this->routes[$version];
-
-        // This is what we extended the class for, to use the dispatcher created
-        // by LumenRouteBinding instead of creating a new one.
-        $this->app['dispatcher']->setRoutesResolver(function() use ($routes) {
-            return $routes->getData();
-        });
-
-        $this->normalizeRequestUri($request);
-
-        return $this->app->dispatch($request);
-    }
-}
-```
-
-#### 2- Extend Dingo ServiceProvider
-
-Next we need to extend the service provider to use the custom class, Create the following class in `app/Providers` :
-
-```PHP
-// app/Providers/DingoServiceProvider.php
-
-namespace App\Providers;
-
-use App\Custom\DingoAdapter;
-use FastRoute\RouteParser\Std as StdRouteParser;
-use FastRoute\DataGenerator\GroupCountBased as GcbDataGenerator;
-use Dingo\Api\Provider\LumenServiceProvider as BaseDingoServiceProvider;
-
-class DingoServiceProvider extends BaseDingoServiceProvider
-{
-    /**
-     * Register the service provider.
-     *
-     * @return void
-     */
-    public function register()
-    {
-        parent::register();
-
-        // Replace dingo adapter with an extended one to use the dispatcher from LumenRouteBinding
-        $this->app->singleton('api.router.adapter', function ($app) {
-            return new DingoAdapter($app, new StdRouteParser, new GcbDataGenerator, '');
-        });
-    }
-}
-```
-
-#### 3- Register the custom service provider
-
-Then in `bootstrap/app.php` replace the registeration of `Dingo` service provider with the custom one:
-
-```PHP
-// remove this line
 $app->register(Dingo\Api\Provider\LumenServiceProvider::class);
-
-// and add this line
-$app->register(App\Providers\DingoServiceProvider::class);
 ```
 
-And don't forget to register the `LumenRouteBinding` service provider itself 
-
+And add this line instead :
 ```PHP
-$app->register(App\Providers\RouteBindingServiceProvider::class);
+$app->register(mmghv\LumenRouteBinding\DingoServiceProvider::class);
 ```
 
-That's it, Now you shoud be able to use `LumenRoutebinding` with `DingoAPI`.
+_(don't forget to also register the `LumenRouteBinding` service provider itself)_
+
+That's it, Now you should be able to use `LumenRoutebinding` with `DingoAPI`.
 
 ## Contributing
 If you found an issue, Please report it [here](https://github.com/mmghv/lumen-route-binding/issues).
@@ -432,5 +346,5 @@ Pull Requests are welcome, just make sure to follow the PSR-2 standards and don'
 
 ## License & Copyright
 
-Copyright © 2016, [Mohamed Gharib](https://github.com/mmghv).
+Copyright © 2016-2017, [Mohamed Gharib](https://github.com/mmghv).
 Released under the [MIT license](LICENSE).
