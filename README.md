@@ -27,7 +27,7 @@ This package Adds support for `Route Model Binding` in Lumen (5.0 to 5.5).
 composer require mmghv/lumen-route-binding "^1.0"
 ```
 
-> Requires
+> It requires
 > ```
 > php >= 5.4.0
 > Lumen 5.*
@@ -44,25 +44,7 @@ In the coming section ..
 
 ### Where to Define our Bindings
 
-You have 2 options :
-
-#### OPTION 1
-
-To register the service provider included with the package and define your bindings in `bootstrap/app.php` :
-
-```PHP
-// Register the package's service provider
-$app->register('mmghv\LumenRouteBinding\RouteBindingServiceProvider');
-
-// Get the $binder instance from the IoC Container
-$binder = $app['bindingResolver'];
-
-// Then define your bindings here ..
-```
-
-#### OPTION 2 (better)
-
-To create a dedicated service provider that extends the package's one and place it in `app/Providers` :
+Create a service provider that extends the package's one and place it in `app/Providers` :
 
 ```PHP
 // app/Providers/RouteBindingServiceProvider.php
@@ -86,13 +68,13 @@ class RouteBindingServiceProvider extends BaseServiceProvider
 }
 ```
 
-Then register this provider rather than the package's one in `bootstrap/app.php` :
+Then register it in `bootstrap/app.php` :
 
 ```PHP
 $app->register('App\Providers\RouteBindingServiceProvider');
 ```
 
-This way, We can define our `bindings` in a dedicated service provider (in the `boot` method).
+Now we can define our `bindings` in the `boot` method.
 
 ### Defining the Bindings
 
@@ -265,13 +247,7 @@ public function findForRoute($val)
 
 ##### Handling the `NotFound` Exception :
 
-Similar to explicit binding, We can handle the exception thrown in the resolver method (the model `firstOrFail` or in our repository) by passing a closure as the fifth parameter to the method `implicitBind` :
-
-```PHP
-$binder->implicitBind('App\Repositories', '', 'Repository', 'findForRoute', function($e) {
-    // Do something with the exception
-});
-```
+Similar to explicit binding, We can handle the exception thrown in the resolver method (the model `firstOrFail` or in our repository) by passing a closure as the fifth parameter to the method `implicitBind`.
 
 #### 3) Composite Binding
 
@@ -310,20 +286,14 @@ This type of binding takes a priority over any other type of binding, Meaning th
 
 ##### Handling the `NotFound` Exception :
 
-Similar to explicit and implicit binding, We can handle the exception thrown in the resolver callback by passing a closure as the third parameter to the method `compositeBind` :
-
-```PHP
-$binder->compositeBind(['department', 'section'], 'App\Department@getDepartmentAndSection', function($e) {
-    // Do something with the exception
-});
-```
+Similar to explicit and implicit binding, We can handle the exception thrown in the resolver callback by passing a closure as the third parameter to the method `compositeBind`.
 
 ## DingoAPI Integration
 
 **NOTE**
-This documentation is for `dingo/api` version `2.*`, for earlier versions of `dingo/api`, follow this [link](https://github.com/mmghv/lumen-route-binding/issues/6).
+This documentation is for [dingo/api](https://github.com/dingo/api) `v2.*`, for earlier versions of `dingo`, follow this [link](https://github.com/mmghv/lumen-route-binding/issues/6).
 
-To integrate `dingo/api` with `LumenRouteBinding`, all you need to do is replace the registration of the default `dingo` service provider with the custom one shipped with `LumenRouteBinding`:
+To integrate `dingo/api` with `LumenRouteBinding`, all you need to do is to replace the registration of the default `dingo` service provider with the custom one shipped with `LumenRouteBinding`:
 
 So remove this line in `bootstrap/app.php` :
 ```PHP
