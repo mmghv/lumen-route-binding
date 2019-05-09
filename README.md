@@ -1,13 +1,13 @@
 # Lumen Route Binding
 
 [![Build Status](https://travis-ci.org/mmghv/lumen-route-binding.svg?branch=master)](https://travis-ci.org/mmghv/lumen-route-binding)
-[![Lumen Version](https://img.shields.io/badge/Lumen-5.0%20to%205.7-orange.svg)](https://github.com/laravel/lumen) 
+[![Lumen Version](https://img.shields.io/badge/Lumen-5.0%20to%205.8-orange.svg)](https://github.com/laravel/lumen) 
 [![Latest Stable Version](https://poser.pugx.org/mmghv/lumen-route-binding/v/stable)](https://packagist.org/packages/mmghv/lumen-route-binding)
 [![Total Downloads](https://poser.pugx.org/mmghv/lumen-route-binding/downloads)](https://packagist.org/packages/mmghv/lumen-route-binding)
 [![Latest Unstable Version](https://poser.pugx.org/mmghv/lumen-route-binding/v/unstable)](https://packagist.org/packages/mmghv/lumen-route-binding)
 [![License](https://poser.pugx.org/mmghv/lumen-route-binding/license)](LICENSE)
 
-This package Adds support for `Route Model Binding` in Lumen (5.0 to 5.7).
+This package Adds support for `Route Model Binding` in Lumen (5.0 to 5.8).
 
 > As known, Lumen doesn't support `Route Model Binding` out of the box due to the fact that Lumen doesn't use the Illuminate router that Laravel uses, Instead, It uses the [FastRoute](https://github.com/nikic/FastRoute) which is much faster. With this package, We add support for the powerful `Route Model Binding` while still benefit the speed of the FastRoute in Lumen.
 
@@ -71,7 +71,7 @@ class RouteBindingServiceProvider extends BaseServiceProvider
 Then register it in `bootstrap/app.php` :
 
 ```PHP
-$app->register('App\Providers\RouteBindingServiceProvider');
+$app->register(App\Providers\RouteBindingServiceProvider::class);
 ```
 
 Now we can define our `bindings` in the `boot` method.
@@ -149,7 +149,7 @@ $binder->bind('article', 'App\Article', function($e) {
 
 #### 2) Implicit Binding
 
-Using the `implicitBind` method, We can tell the binder to automatically bind all the models in a given namespace :
+Using the `implicitBind` method, We can tell the binder to automatically bind all models in a given namespace :
 
 ```PHP
 $binder->implicitBind('App');
@@ -185,7 +185,7 @@ public function getRouteKeyName()
 
 We can use implicit binding with classes other than the `Eloquent` models, For example if we use something like `Repository Pattern` and would like our bindings to use the repository classes instead of the Eloquent models, We can do that.
 
-The problem is that the repository classes names usually use a `Prefix` and\or `Suffix` beside the Eloquent model name, For example, The `Article` Eloquent model, May have a corresponding repository class with the name `EloquentArticleRepository`, We can set our implicit binding to use this prefix and\or suffix like this :
+Repository classes names usually use a `Prefix` and\or `Suffix` beside the Eloquent model name, For example, The `Article` Eloquent model, May have a corresponding repository class with the name `EloquentArticleRepository`, We can set our implicit binding to use this prefix and\or suffix like this :
 
 ```PHP
 $binder->implicitBind('App\Repositories', 'Eloquent', 'Repository');
@@ -291,7 +291,7 @@ Similar to explicit and implicit binding, We can handle the exception thrown in 
 ## DingoAPI Integration
 
 **NOTE**
-This documentation is for [dingo/api](https://github.com/dingo/api) `v2.*`, for earlier versions of `dingo`, follow this [link](https://github.com/mmghv/lumen-route-binding/issues/6).
+This documentation is for [dingo/api](https://github.com/dingo/api) `version 2.*`, for earlier versions of `dingo`, follow this [link](https://github.com/mmghv/lumen-route-binding/issues/6).
 
 To integrate `dingo/api` with `LumenRouteBinding`, all you need to do is to replace the registration of the default `dingo` service provider with the custom one shipped with `LumenRouteBinding`:
 
