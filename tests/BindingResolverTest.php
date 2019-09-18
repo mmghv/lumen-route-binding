@@ -35,6 +35,7 @@ class BindingResolverTest extends TestCase
             return new $class;
         });
     }
+
     /**
      * setup expectations on mock model to receive :
      * $model->where([$model->getRouteKeyName(), 'wildcard_value'])->firstOrFail();
@@ -147,12 +148,11 @@ class BindingResolverTest extends TestCase
         $this->assertSame($this->expected, $r, '-> Custom closure binding should be called with "wildcard_value" and it\'s return value ("bind_result") should be used as the binding result!');
     }
 
-    /**
-     * @expectedException \Exception
-     * @expectedExceptionMessage [App\Models\NotFoundModel]
-     */
     public function testExplicitBindThrowsExceptionIfClassNotFound()
     {
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('[App\Models\NotFoundModel]');
+
         $this->wildcards['model'] = 'wildcard_value';
 
         // set bindings
@@ -162,12 +162,11 @@ class BindingResolverTest extends TestCase
         $r = $this->binder->resolveBindings($this->wildcards);
     }
 
-    /**
-     * @expectedException \Exception
-     * @expectedExceptionMessage [App\Models\NotFoundModel]
-     */
     public function testExplicitBindThrowsExceptionIfClassNotFoundUsingClassAtMethodStyle()
     {
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('[App\Models\NotFoundModel]');
+
         $this->wildcards['model'] = 'wildcard_value';
 
         // set bindings
@@ -177,12 +176,11 @@ class BindingResolverTest extends TestCase
         $r = $this->binder->resolveBindings($this->wildcards);
     }
 
-    /**
-     * @expectedException \Exception
-     * @expectedExceptionMessage NotFoundMethod
-     */
     public function testExplicitBindThrowsExceptionIfMethodNotFoundUsingClassAtMethodStyle()
     {
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('NotFoundMethod');
+
         $this->wildcards['model'] = 'wildcard_value';
 
         // set bindings
@@ -192,12 +190,11 @@ class BindingResolverTest extends TestCase
         $r = $this->binder->resolveBindings($this->wildcards);
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     * @expectedExceptionMessage Invalid binder value
-     */
     public function testExplicitBindThrowsExceptionIfBinderIsInvalid()
     {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid binder value');
+
         $this->wildcards['model'] = 'wildcard_value';
 
         // set bindings
@@ -207,12 +204,11 @@ class BindingResolverTest extends TestCase
         $r = $this->binder->resolveBindings($this->wildcards);
     }
 
-    /**
-     * @expectedException \Exception
-     * @expectedExceptionMessage NotFound
-     */
     public function testExplicitBindRethrowsException()
     {
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('NotFound');
+
         $this->expectWhereRouteKeyNameFirstOrFail($this->model, true);
 
         $this->wildcards['model'] = 'wildcard_value';
@@ -224,12 +220,11 @@ class BindingResolverTest extends TestCase
         $r = $this->binder->resolveBindings($this->wildcards);
     }
 
-    /**
-     * @expectedException \Exception
-     * @expectedExceptionMessage NotFound
-     */
     public function testExplicitBindWithClosureRethrowsException()
     {
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('NotFound');
+
         $this->wildcards['model'] = 'wildcard_value';
 
         // set bindings
@@ -383,12 +378,11 @@ class BindingResolverTest extends TestCase
         $this->assertSame($this->wildcards, $r, '-> Bindings for classes not found in the given namespace should be ignored and their values should not be touched!');
     }
 
-    /**
-     * @expectedException \Exception
-     * @expectedExceptionMessage NotFound
-     */
     public function testImplicitBindRethrowsException()
     {
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('NotFound');
+
         $this->expectWhereRouteKeyNameFirstOrFail($this->model, true);
 
         $this->wildcards['model'] = 'wildcard_value';
@@ -400,12 +394,11 @@ class BindingResolverTest extends TestCase
         $r = $this->binder->resolveBindings($this->wildcards);
     }
 
-    /**
-     * @expectedException \Exception
-     * @expectedExceptionMessage NotFound
-     */
     public function testImplicitBindRethrowsExceptionWithDefinedMethod()
     {
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('NotFound');
+
         $this->model->shouldReceive('findForRoute')->once()
              ->with('wildcard_value')->andThrow(new \Exception('NotFound'));
 
@@ -585,24 +578,22 @@ class BindingResolverTest extends TestCase
         $this->assertSame($this->expected, $r);
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     * @expectedExceptionMessage Invalid $keys value
-     */
     public function testCompositeBindAcceptsOnlyArrayOfParts()
     {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid $keys value');
+
         // set bindings
         $this->binder->compositeBind('string', function () {
             //
         });
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     * @expectedExceptionMessage Invalid $keys value
-     */
     public function testCompositeBindAcceptsOnlyArrayOfMoreThanOnePart()
     {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid $keys value');
+
         // set bindings
         $this->binder->compositeBind(['model'], function () {
             //
@@ -685,22 +676,20 @@ class BindingResolverTest extends TestCase
         $this->assertSame($this->expected, $r, '-> Class@method binding should be called with expected wildcards values and it\'s return should be used as the binding results');
     }
 
-    /**
-     * @expectedException \Exception
-     * @expectedExceptionMessage Binder must be
-     */
     public function testCompositeBindAcceptsOnlyCallableOrClassAtMethodString()
     {
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('Binder must be');
+
         // set bindings
         $this->binder->compositeBind(['parent', 'child'], 'App\Models\Model');
     }
 
-    /**
-     * @expectedException \Exception
-     * @expectedExceptionMessage [App\Models\NotFoundModel]
-     */
     public function testCompositeBindSquawksIfClassNotFound()
     {
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('[App\Models\NotFoundModel]');
+
         $this->wildcards = ['parent' => 'parent_value', 'child' => 'child_value'];
 
         // set bindings
@@ -710,12 +699,11 @@ class BindingResolverTest extends TestCase
         $r = $this->binder->resolveBindings($this->wildcards);
     }
 
-    /**
-     * @expectedException \Exception
-     * @expectedExceptionMessage NotFoundMethod
-     */
     public function testCompositeBindSquawksIfMethodNotFound()
     {
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('NotFoundMethod');
+
         $this->wildcards = ['parent' => 'parent_value', 'child' => 'child_value'];
 
         // set bindings
@@ -810,12 +798,11 @@ class BindingResolverTest extends TestCase
         // =========================================================================
     }
 
-    /**
-     * @expectedException \Exception
-     * @expectedExceptionMessage Return value should be
-     */
     public function testCompositeBindSquawksIfReturnValueIsNotAnArray()
     {
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('Return value should be');
+
         $this->wildcards = ['parent' => 'parent_value', 'child' => 'child_value'];
         $this->expected = ['parent' => 'parent_result', 'child' => 'child_result'];
 
@@ -828,12 +815,11 @@ class BindingResolverTest extends TestCase
         $r = $this->binder->resolveBindings($this->wildcards);
     }
 
-    /**
-     * @expectedException \Exception
-     * @expectedExceptionMessage Return value should be
-     */
     public function testCompositeBindSquawksIfReturnValueIsNotAnArrayOfTheSameCountAsTheWildcards()
     {
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('Return value should be');
+
         $this->wildcards = ['parent' => 'parent_value', 'child' => 'child_value'];
         $this->expected = ['parent' => 'parent_result', 'child' => 'child_result'];
 
@@ -846,12 +832,11 @@ class BindingResolverTest extends TestCase
         $r = $this->binder->resolveBindings($this->wildcards);
     }
 
-    /**
-     * @expectedException \Exception
-     * @expectedExceptionMessage NotFound
-     */
     public function testCompositeBindRethrowsException()
     {
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('NotFound');
+
         $this->wildcards = ['parent' => 'parent_value', 'child' => 'child_value'];
         $this->expected = ['parent' => 'parent_result', 'child' => 'child_result'];
 
