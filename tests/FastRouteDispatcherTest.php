@@ -34,7 +34,7 @@ class FastRouteDispatcherTest extends TestCase
         $this->dispatcher->setBindingResolver($this->binder);
     }
 
-    public function tearDown()
+    public function tearDown(): void
     {
         m::close();
 

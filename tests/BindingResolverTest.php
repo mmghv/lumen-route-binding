@@ -24,7 +24,7 @@ class BindingResolverTest extends TestCase
         $this->expected = $this->wildcards;
     }
 
-    public function tearDown()
+    public function tearDown(): void
     {
         m::close();
     }
