@@ -2,12 +2,12 @@
 namespace Tests;
 
 use Mockery as m;
-use FastRoute\RouteCollector;
+use PHPUnit\Framework\TestCase;
 use FastRoute\RouteParser\Std as RouteParser;
 use mmghv\LumenRouteBinding\FastRouteDispatcher;
 use FastRoute\DataGenerator\GroupCountBased as DataGenerator;
 
-class FastRouteDispatcherTest extends \PHPUnit_Framework_TestCase
+class FastRouteDispatcherTest extends TestCase
 {
     public static function setUpBeforeClass()
     {

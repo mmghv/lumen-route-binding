@@ -1,10 +1,11 @@
 <?php
 namespace Tests;
 
-use mmghv\LumenRouteBinding\BindingResolver;
 use Mockery as m;
+use PHPUnit\Framework\TestCase;
+use mmghv\LumenRouteBinding\BindingResolver;
 
-class BindingResolverTest extends \PHPUnit_Framework_TestCase
+class BindingResolverTest extends TestCase
 {
     public function setUp()
     {
@@ -622,6 +623,8 @@ class BindingResolverTest extends \PHPUnit_Framework_TestCase
         $this->binder->compositeBind(['part1', 'part2', 'part3', 'part4'], function () {
             //
         });
+
+        $this->assertTrue(true);
     }
 
     public function testCompositeBindWorks()

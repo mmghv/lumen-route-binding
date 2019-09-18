@@ -1,6 +1,7 @@
 <?php
 namespace Tests;
 
+use PHPUnit\Framework\TestCase;
 use Illuminate\Http\Request;
 use Laravel\Lumen\Application;
 
@@ -8,7 +9,7 @@ use Laravel\Lumen\Application;
  * @runTestsInSeparateProcesses
  * @preserveGlobalState disabled
  */
-class IntegratedTest extends \PHPUnit_Framework_TestCase
+class IntegratedTest extends TestCase
 {
     public function testRouteBindingAndItsServiceProviderWorksAsExpectedWithLumen()
     {
