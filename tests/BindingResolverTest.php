@@ -7,7 +7,7 @@ use mmghv\LumenRouteBinding\BindingResolver;
 
 class BindingResolverTest extends TestCase
 {
-    public function setUp(): voind
+    public function setUp(): void
     {
         $this->resetBinder();
 

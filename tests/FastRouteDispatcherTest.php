@@ -9,13 +9,13 @@ use FastRoute\DataGenerator\GroupCountBased as DataGenerator;
 
 class FastRouteDispatcherTest extends TestCase
 {
-    public static function setUpBeforeClass(): voind
+    public static function setUpBeforeClass(): void
     {
         // Setup stub for FastRoute dispatcher class
         class_alias('Tests\GroupCountBasedStub', 'FastRoute\Dispatcher\GroupCountBased');
     }
 
-    public function setUp(): voind
+    public function setUp(): void
     {
         // Setup a global variable used to record the base dispatcher calls
         // (which our class-under-test is extending) to be asserted here
