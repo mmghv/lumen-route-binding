@@ -67,8 +67,11 @@ class BindingResolver
         // If no composite binding found, check for explicit and implicit bindings
         if (!empty($this->implicitBindings) || !empty($this->bindings)) {
             foreach ($vars as $var => $value) {
-                $vars[$var] = $this->resolveBinding($var, $value);
-                $vars[get_class($vars[$var])] = $vars[$var];
+                $resolved = $this->resolveBinding($var, $value);
+                $vars[$var] = $resolved;
+                if (is_object($resolved)) {
+                    $vars[get_class($resolved)] = $resolved;
+                }
             }
         }
 
