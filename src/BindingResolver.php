@@ -68,6 +68,7 @@ class BindingResolver
         if (!empty($this->implicitBindings) || !empty($this->bindings)) {
             foreach ($vars as $var => $value) {
                 $vars[$var] = $this->resolveBinding($var, $value);
+                $vars[get_class($vars[$var])] = $vars[$var];
             }
         }
 
