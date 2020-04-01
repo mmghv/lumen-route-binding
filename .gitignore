@@ -1,5 +1,6 @@
 composer.phar
 /vendor/
+.vscode
 
-# We ignore the lock file to allow testes to be done on the last supported versions of Lumen and FastRoute
+# We ignore the lock file to allow tests to be done on the latest supported versions of Lumen and FastRoute
 composer.lock
