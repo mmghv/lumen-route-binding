@@ -12,7 +12,7 @@
     ],
     "require": {
         "php": ">=7.1",
-        "laravel/lumen-framework": "5 - 7",
+        "laravel/lumen-framework": "5 - 8",
         "nikic/fast-route": ">=0.4 <2.0"
     },
     "require-dev": {
