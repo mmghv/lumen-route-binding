@@ -1,7 +1,7 @@
 # Lumen Route Binding
 
 [![Build Status](https://travis-ci.org/mmghv/lumen-route-binding.svg?branch=master)](https://travis-ci.org/mmghv/lumen-route-binding)
-[![Lumen Version](https://img.shields.io/badge/Lumen-5%20--%207-orange.svg)](https://github.com/laravel/lumen)
+[![Lumen Version](https://img.shields.io/badge/Lumen-5%20--%208-orange.svg)](https://github.com/laravel/lumen)
 [![Latest Stable Version](https://poser.pugx.org/mmghv/lumen-route-binding/v/stable)](https://packagist.org/packages/mmghv/lumen-route-binding)
 [![Total Downloads](https://poser.pugx.org/mmghv/lumen-route-binding/downloads)](https://packagist.org/packages/mmghv/lumen-route-binding)
 [![Latest Unstable Version](https://poser.pugx.org/mmghv/lumen-route-binding/v/unstable)](https://packagist.org/packages/mmghv/lumen-route-binding)

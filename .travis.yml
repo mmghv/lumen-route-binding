@@ -5,5 +5,5 @@ php:
   - 7.4
 
 script:
-  - composer install
+  - COMPOSER_MEMORY_LIMIT=-1 travis_retry composer install --prefer-dist --no-interaction
   - phpunit
