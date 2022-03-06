@@ -1,13 +1,13 @@
 # Lumen Route Binding
 
 [![Build Status](https://travis-ci.org/mmghv/lumen-route-binding.svg?branch=master)](https://travis-ci.org/mmghv/lumen-route-binding)
-[![Lumen Version](https://img.shields.io/badge/Lumen-5%20--%208-orange.svg)](https://github.com/laravel/lumen)
+[![Lumen Version](https://img.shields.io/badge/Lumen-5%20--%209-orange.svg)](https://github.com/laravel/lumen)
 [![Latest Stable Version](https://poser.pugx.org/mmghv/lumen-route-binding/v/stable)](https://packagist.org/packages/mmghv/lumen-route-binding)
 [![Total Downloads](https://poser.pugx.org/mmghv/lumen-route-binding/downloads)](https://packagist.org/packages/mmghv/lumen-route-binding)
 [![Latest Unstable Version](https://poser.pugx.org/mmghv/lumen-route-binding/v/unstable)](https://packagist.org/packages/mmghv/lumen-route-binding)
 [![License](https://poser.pugx.org/mmghv/lumen-route-binding/license)](LICENSE)
 
-This package Adds support for `Route Model Binding` in Lumen (5 - 8).
+This package Adds support for `Route Model Binding` in Lumen (5 - 9).
 
 > As known, Lumen doesn't support `Route Model Binding` out of the box due to the fact that Lumen doesn't use the Illuminate router that Laravel uses, Instead, It uses [FastRoute](https://github.com/nikic/FastRoute) which is much faster. With this package, We add support for the powerful `Route Model Binding` while still benefit the speed of FastRoute in Lumen.
 
@@ -19,7 +19,7 @@ This package Adds support for `Route Model Binding` in Lumen (5 - 8).
     * [Implicit Binding](#2-implicit-binding)
     * [Composite Binding](#3-composite-binding)
   * [DingoAPI Integration](#dingoapi-integration)
-  
+
 ## Installation
 
 #### Using composer
@@ -30,7 +30,7 @@ composer require mmghv/lumen-route-binding "^1.0"
 > It requires
 > ```
 > php >= 7.1
-> Lumen 5 - 8
+> Lumen 5 - 9
 > ```
 
 #### Register the service provider

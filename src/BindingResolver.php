@@ -239,7 +239,7 @@ class BindingResolver
         try {
             // Try to call the resolver method and retrieve the model
             if (is_array($args)) {
-                return call_user_func_array($callable, $args);
+                return call_user_func_array($callable, array_values($args));
             } else {
                 return call_user_func($callable, $args);
             }
