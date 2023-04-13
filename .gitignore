@@ -1,6 +1,7 @@
 composer.phar
 /vendor/
 .vscode
+.phpunit.result.*
 
 # We ignore the lock file to allow tests to be done on the latest supported versions of Lumen and FastRoute
 composer.lock

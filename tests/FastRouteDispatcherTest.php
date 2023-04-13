@@ -9,6 +9,10 @@ use FastRoute\DataGenerator\GroupCountBased as DataGenerator;
 
 class FastRouteDispatcherTest extends TestCase
 {
+    private $routeData;
+    private $binder;
+    private $dispatcher;
+
     public static function setUpBeforeClass(): void
     {
         // Setup stub for FastRoute dispatcher class

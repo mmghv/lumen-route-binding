@@ -7,6 +7,12 @@ use mmghv\LumenRouteBinding\BindingResolver;
 
 class BindingResolverTest extends TestCase
 {
+    private $model;
+    private $myTestRepo;
+    private $wildcards;
+    private $expected;
+    private $binder;
+
     public function setUp(): void
     {
         $this->resetBinder();
